@@ -1,0 +1,27 @@
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand({ping: 1}).ok === 1 ? 0 : 2)"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  app:
+    build: .
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      ADOPTION_MONGO_URI: mongodb://mongo:27017
+    ports:
+      - "127.0.0.1:${DEMO_PORT:-8047}:8047"
+    volumes:
+      - "${ADOPTION_ARCHIVE_DIR:-./archive}:/app/archive:ro"
+    command: ["sh", "-ec", "python tools/restore_catalogue.py && exec python -m backend --host 0.0.0.0"]
+
+volumes:
+  mongo-data:

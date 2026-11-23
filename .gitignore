@@ -1,0 +1,6 @@
+/.venv/
+/.env
+/archive/
+/photo-packs/
+__pycache__/
+*.py[cod]

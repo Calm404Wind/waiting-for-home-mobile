@@ -1,0 +1,12 @@
+*
+!requirements.txt
+!backend/
+!backend/**
+!static/
+!static/**
+!tools/
+!tools/restore_catalogue.py
+!tools/mongo_support.py
+!data/
+!data/catalogue.mongodb.zip
+**/__pycache__/

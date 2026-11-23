@@ -1,0 +1,263 @@
+{
+  "spca_wan_chai": {
+    "longitude": 114.17886,
+    "latitude": 22.28204,
+    "source_url": "https://www.als.gov.hk/lookup?q=%E7%81%A3%E4%BB%94%E9%81%8B%E7%9B%9B%E8%A1%975%E8%99%9F&n=7",
+    "query": "灣仔運盛街5號",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "香港",
+      "ChiDistrict": {
+        "DcDistrict": "灣仔區"
+      },
+      "ChiStreet": {
+        "StreetName": "運盛街",
+        "BuildingNoFrom": "5"
+      },
+      "BuildingName": "賽馬會彭美麗動物福利中心"
+    },
+    "district_name": "灣仔區",
+    "geo_address": "3647315907T20050430",
+    "photo_url": "https://www.spca.org.hk/wp-content/uploads/2023/06/banner-wan-chai-centre.jpg",
+    "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/hong-kong-centre-hq/"
+  },
+  "spca_tsing_yi": {
+    "longitude": 114.11159,
+    "latitude": 22.34691,
+    "source_url": "https://www.als.gov.hk/lookup?q=%E9%9D%92%E8%A1%A3%E9%95%B7%E8%BC%9D%E8%B7%AF38%E8%99%9F&n=7",
+    "query": "青衣長輝路38號",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "新界",
+      "ChiDistrict": {
+        "DcDistrict": "葵青區"
+      },
+      "ChiStreet": {
+        "StreetName": "長輝路",
+        "BuildingNoFrom": "38"
+      }
+    },
+    "district_name": "葵青區",
+    "geo_address": "2954323092T20230303",
+    "photo_url": "https://www.spca.org.hk/wp-content/uploads/2024/02/tsing-yi-centre_p1-400x273.jpg",
+    "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/the-spca-jockey-club-centennial-centre/"
+  },
+  "spca_kowloon": {
+    "longitude": 114.17762,
+    "latitude": 22.31133,
+    "source_url": "https://www.als.gov.hk/lookup?q=%E4%BD%95%E6%96%87%E7%94%B0%E5%85%AC%E4%B8%BB%E9%81%93105%E8%99%9F&n=7",
+    "query": "何文田公主道105號",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "九龍",
+      "ChiDistrict": {
+        "DcDistrict": "九龍城區"
+      },
+      "ChiStreet": {
+        "StreetName": "公主道",
+        "BuildingNoFrom": "105"
+      },
+      "BuildingName": "愛護動物協會"
+    },
+    "district_name": "九龍城區",
+    "geo_address": "3634519150T20050430",
+    "photo_url": "https://www.spca.org.hk/wp-content/uploads/2023/06/Kowloon-Centre-400x273.jpg",
+    "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/kowloon-centre/"
+  },
+  "spca_sai_kung": {
+    "longitude": 114.2727,
+    "latitude": 22.38118,
+    "source_url": "https://www.als.gov.hk/lookup?q=%E8%A5%BF%E8%B2%A2%E8%90%AC%E5%B9%B4%E8%A1%9765%E8%99%9F&n=7",
+    "query": "西貢萬年街65號",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "新界",
+      "ChiDistrict": {
+        "DcDistrict": "西貢區"
+      },
+      "ChiStreet": {
+        "LocationName": "西貢",
+        "StreetName": "萬年街",
+        "BuildingNoFrom": "65"
+      }
+    },
+    "district_name": "西貢區",
+    "geo_address": "4613726888T20050430",
+    "photo_url": "https://www.spca.org.hk/wp-content/uploads/2025/08/spca_sk_p1_700-400x273.jpg",
+    "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/sai-kung-adopt-a-pet-centre/"
+  },
+  "hkdr_ap_lei_chau": {
+    "longitude": 114.15671,
+    "latitude": 22.24416,
+    "source_url": "https://www.als.gov.hk/lookup?q=13-15+Wai+Fung+Street+Ap+Lei+Chau&n=7",
+    "query": "13-15 Wai Fung Street Ap Lei Chau",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "香港",
+      "ChiDistrict": {
+        "DcDistrict": "南區"
+      },
+      "ChiStreet": {
+        "StreetName": "惠風街",
+        "BuildingNoFrom": "13",
+        "BuildingNoTo": "15"
+      }
+    },
+    "district_name": "南區",
+    "geo_address": "3418911712T20140428"
+  },
+  "hkdr_tai_po": {
+    "longitude": 114.15139,
+    "latitude": 22.44675,
+    "source_url": "https://www.als.gov.hk/lookup?q=6+Shek+Lin+Road+Tai+Po&n=7",
+    "query": "6 Shek Lin Road Tai Po",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "新界",
+      "ChiDistrict": {
+        "DcDistrict": "大埔區"
+      },
+      "ChiStreet": {
+        "StreetName": "石蓮路",
+        "BuildingNoFrom": "6"
+      },
+      "BuildingName": "甜苑"
+    },
+    "district_name": "大埔區",
+    "geo_address": "3364534146T20050430"
+  },
+  "paws_united_repulse_bay_cats": {
+    "longitude": 114.19759,
+    "latitude": 22.23635,
+    "source_url": "https://www.als.gov.hk/lookup?q=the+pulse+28+Beach+Road+Repulse+Bay&n=7",
+    "query": "the pulse 28 Beach Road Repulse Bay",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "香港",
+      "ChiDistrict": {
+        "DcDistrict": "南區"
+      },
+      "ChiStreet": {
+        "StreetName": "海灘道",
+        "BuildingNoFrom": "28"
+      },
+      "BuildingName": "THE PULSE"
+    },
+    "district_name": "南區",
+    "geo_address": "3840410848T20080918"
+  },
+  "paws_united_repulse_bay_dogs": {
+    "longitude": 114.19759,
+    "latitude": 22.23635,
+    "source_url": "https://www.als.gov.hk/lookup?q=the+pulse+28+Beach+Road+Repulse+Bay&n=7",
+    "query": "the pulse 28 Beach Road Repulse Bay",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "香港",
+      "ChiDistrict": {
+        "DcDistrict": "南區"
+      },
+      "ChiStreet": {
+        "StreetName": "海灘道",
+        "BuildingNoFrom": "28"
+      },
+      "BuildingName": "THE PULSE"
+    },
+    "district_name": "南區",
+    "geo_address": "3840410848T20080918"
+  },
+  "sai_kung_stray_friends_tai_lam_wu": {
+    "longitude": 114.23469,
+    "latitude": 22.34754,
+    "source_url": "https://www.als.gov.hk/lookup?q=%E8%A5%BF%E8%B2%A2%E5%A4%A7%E8%97%8D%E6%B9%96%E6%9D%91151%E8%99%9F&n=7",
+    "query": "西貢大藍湖村151號",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "新界",
+      "ChiDistrict": {
+        "DcDistrict": "西貢區"
+      },
+      "ChiStreet": {
+        "LocationName": "西貢",
+        "StreetName": "大藍湖",
+        "BuildingNoFrom": "151"
+      }
+    },
+    "district_name": "西貢區",
+    "geo_address": "4222323161T20050430"
+  },
+  "love_cats_kwun_tong": {
+    "longitude": 114.22367,
+    "latitude": 22.31203,
+    "source_url": "https://www.als.gov.hk/lookup?q=%E5%B7%A7%E9%81%8B%E5%B7%A5%E6%A5%AD%E5%A4%A7%E5%BB%88+66+%E9%A7%BF%E6%A5%AD%E8%A1%97&n=7",
+    "query": "巧運工業大廈 66 駿業街",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "九龍",
+      "ChiDistrict": {
+        "DcDistrict": "觀塘區"
+      },
+      "ChiStreet": {
+        "StreetName": "駿業街",
+        "BuildingNoFrom": "66"
+      },
+      "BuildingName": "巧運工業大廈"
+    },
+    "district_name": "觀塘區",
+    "geo_address": "4109019229T20050430"
+  },
+  "saa_pak_sha": {
+    "longitude": 114.02247,
+    "latitude": 22.4247204,
+    "source_url": "https://www.saa.org.hk/zh/about.php?id=5",
+    "method": "機構官網交通指引連結的地標座標",
+    "matched_address": "新界元朗僑興路白沙村第一段",
+    "district_name": "元朗區",
+    "map_source_url": "https://maps.app.goo.gl/N4dE5BERji36rDAr5",
+    "address_reference_url": "https://fpf.ccidahk.gov.hk/en/location/detail.php?id=1095",
+    "photo_url": "https://fpf.ccidahk.gov.hk/common/images/location/01095/01095a.jpg",
+    "photo_source_url": "https://fpf.ccidahk.gov.hk/en/location/detail.php?id=1095"
+  },
+  "lap_sai_ying_pun": {
+    "longitude": 114.14337,
+    "latitude": 22.28654,
+    "source_url": "https://www.als.gov.hk/lookup?q=11%20First%20Street%20Sai%20Ying%20Pun&n=7",
+    "query": "11 First Street Sai Ying Pun",
+    "method": "政府地址搜尋服務的門牌／處所座標",
+    "matched_address": {
+      "Region": "香港",
+      "ChiDistrict": {"DcDistrict": "中西區"},
+      "ChiStreet": {"StreetName": "第一街", "BuildingNoFrom": "11"},
+      "BuildingName": "興業大廈"
+    },
+    "district_name": "中西區",
+    "geo_address": "3281516406T20050430",
+    "address_reference_url": "https://www.lap.org.hk/"
+  },
+  "lap_tsuen_wan": {
+    "longitude": 114.10454,
+    "latitude": 22.37873,
+    "source_url": "https://www.als.gov.hk/lookup?q=187%20Tsuen%20King%20Circuit%20Tsuen%20Wan&n=7",
+    "query": "187 Tsuen King Circuit Tsuen Wan",
+    "method": "政府地址搜尋服務的門牌及座數座標",
+    "matched_address": {
+      "Region": "新界",
+      "ChiDistrict": {"DcDistrict": "荃灣區"},
+      "ChiStreet": {"StreetName": "荃景圍", "BuildingNoFrom": "187"},
+      "ChiEstate": {"EstateName": "荃威花園"},
+      "ChiBlock": {"BlockDescriptor": "座", "BlockNo": "E"}
+    },
+    "district_name": "荃灣區",
+    "geo_address": "2881926616T20050430",
+    "address_reference_url": "https://www.lap.org.hk/"
+  },
+  "hkaac_tuen_mun": {
+    "longitude": 113.9956817,
+    "latitude": 22.4214267,
+    "source_url": "https://hk-aac.org.hk/contact",
+    "method": "機構官網中心地圖的導航定位",
+    "matched_address": "新界屯門和平新村150號",
+    "district_name": "屯門區",
+    "map_source_url": "https://www.google.com/maps/place/%E9%A6%99%E6%B8%AF%E5%8B%95%E7%89%A9%E9%A0%98%E9%A4%8A%E4%B8%AD%E5%BF%83HKAAC/@22.4214267,113.9956817,17z/data=!3m1!4b1!4m6!3m5!1s0x3403fa8c4394b117:0xf5437d2ce2bf383!8m2!3d22.4214267!4d113.9956817!16s%2Fg%2F12hpbgbms"
+  }
+}

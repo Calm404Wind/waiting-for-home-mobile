@@ -1,11 +1,38 @@
-# 等一個家｜手機 Demo 前端
+# 等一個家｜手機 Demo
 
-香港貓狗領養資料專題的手機介面。功能包括滑卡探索、領養指南、動物檔案、照片與狀態時間線、中心地圖、統計圖、帳戶、收藏、分享和申請準備。
+香港貓狗領養資料專題的手機 Demo。可以滑卡探索、查閱領養指南、看中心地圖和統計，並從動物檔案追查照片、原始來源與兩期領養狀態。也可在本機註冊測試帳戶、收藏、分享和完成申請清單。
 
-## 檔案位置
+## 啟動完整 Demo
 
-完整前端在 `static/`。`static/index.html` 是入口，`static/mobile.js` 負責頁面和 API 接駁，`static/insights.js` 包含地圖和圖表。
+1. 複製或下載此倉庫。從 [GitHub Release](https://github.com/Calm404Wind/waiting-for-home-mobile/releases/tag/demo-2026-11-23) 下載 `photos-01.zip` 至 `photos-06.zip`，放到專案根目錄的 `photo-packs/`。
+2. 在專案根目錄執行以下指令。照片還原需要 Python 3.10 或以上，服務由 Docker Compose 啟動。
 
-## 執行方式
+   ```sh
+   python tools/install_photos.py
+   docker compose up --build
+   ```
 
-透過《等一個家》的 FastAPI 服務提供此資料夾。讓 `/` 提供 `static/index.html`，並映射 `/static/`、`/manifest.webmanifest` 和 `/sw.js`。領養紀錄、帳戶和統計由同一來源的 `/api/` 提供，動物照片由 `/media/` 提供。運行完整 Demo 需要另行啟動 FastAPI、MongoDB 及照片目錄。
+3. 開啟 [手機 Demo](http://127.0.0.1:8047/)。首頁的 Verity 個案可查看 10 月 20 日待領養、11 月 23 日已領養的兩次觀察。數據頁可查看中心地圖和各中心的來源。
+
+Compose 會啟動 MongoDB、匯入隨倉庫附上的兩期目錄，再啟動 FastAPI。照片程式會驗證每個壓縮檔的 SHA-256，並把檔案放到 `archive/`。只想核對資料與互動邏輯時，可先啟動 Compose，動物照片會在還原後供應。
+
+若本機已有可用的 MongoDB，也可直接啟動 Python 服務。
+
+```sh
+python -m pip install -r requirements.txt
+python tools/restore_catalogue.py
+python -m backend
+```
+
+Python 服務預設使用 `mongodb://127.0.0.1:27017`，也可透過 `ADOPTION_MONGO_URI` 設定資料庫連線。測試帳戶在新環境建立。
+
+## 原始碼和資料
+
+| 位置 | 內容 |
+|---|---|
+| `static/` | 完整手機前端，入口為 `index.html` |
+| `backend/` | FastAPI、帳戶、領養名錄、統計與地圖 API |
+| `data/catalogue.mongodb.zip` | 2026 年 10 月 20 日及 11 月 23 日領養資料，含 4,681 則刊登、6,302 筆觀察、14 個中心和 19,093 筆媒體關聯 |
+| `data/photos-manifest.json` | 原始照片的檔案路徑、完整性校驗及分包對照 |
+
+本機服務同時提供前端與 `/api/`、`/media/`。要讓組員直接用網址操作，可將 FastAPI、資料庫和照片部署到可連線的環境。
