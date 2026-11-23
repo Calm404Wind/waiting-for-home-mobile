@@ -5,7 +5,7 @@
 ## 啟動完整 Demo
 
 1. 複製或下載此倉庫。從 [GitHub Release](https://github.com/Calm404Wind/waiting-for-home-mobile/releases/tag/demo-2026-11-23) 下載 `photos-01.zip` 至 `photos-06.zip`，放到專案根目錄的 `photo-packs/`。
-2. 在專案根目錄執行以下指令。照片還原需要 Python 3.10 或以上，服務由 Docker Compose 啟動。
+2. 在專案根目錄執行以下指令。照片還原需要 Python 3.11 或以上，服務由 Docker Compose 啟動。
 
    ```sh
    python tools/install_photos.py
