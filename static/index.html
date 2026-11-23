@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fff4e3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="滑動探索香港貓狗的公開領養名錄、領養中心和官網個案紀錄。">
+  <title>等一個家｜香港貓狗領養</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/static/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script type="module" src="/static/mobile.js"></script>
+</head>
+<body>
+  <div class="mobile-app" id="mobile-app">
+    <header class="app-header">
+      <a href="#home" class="app-brand" aria-label="等一個家首頁">
+        <img src="/static/icon-192.png" width="36" height="36" alt="">
+        <span>等一個家</span>
+      </a>
+      <a href="#saved" class="app-bookmarks" aria-label="我的收藏">
+        <span class="nav-glyph nav-glyph-saved" aria-hidden="true"></span><span>收藏</span><span id="header-count" hidden></span>
+      </a>
+    </header>
+
+    <main class="app-content" id="app-content">
+      <section id="home" class="app-screen home-screen" aria-labelledby="home-heading">
+        <div class="home-intro">
+          <h1 id="home-heading">遇見等家的<br><em>貓和狗。</em></h1>
+          <p>滑過香港救援機構的領養檔案，認識牠們，再到官網了解如何領養。</p>
+          <a href="#discover" class="app-action app-action-main">開始滑動探索<span aria-hidden="true">›</span></a>
+        </div>
+
+        <div id="home-status" class="home-status" role="status"></div>
+        <div class="home-totals" id="home-totals" hidden>
+          <div><strong id="cats-count"></strong><span>待領養貓檔案</span></div>
+          <div><strong id="dogs-count"></strong><span>待領養狗檔案</span></div>
+          <a href="#insights" aria-label="查看領養數據"><span class="nav-glyph nav-glyph-insights" aria-hidden="true"></span></a>
+        </div>
+        <p id="home-release" class="source-note" hidden></p>
+
+        <div class="home-story" id="home-story" hidden>
+          <h2>從等待到有家</h2>
+          <button type="button" id="story-button" class="home-film">
+            <img id="story-photo" alt="" width="800" height="560">
+            <span class="home-film-caption">
+              <span><strong id="story-name"></strong><span id="story-organisation"></span></span>
+              <span class="home-film-action">看狀態紀錄</span>
+            </span>
+          </button>
+        </div>
+        <section class="home-story" aria-labelledby="learn-heading">
+          <h2 id="learn-heading">領養前先讀</h2>
+          <div id="home-articles" class="learn-tiles"></div>
+        </section>
+      </section>
+
+      <section id="discover" class="app-screen module-screen" aria-label="滑動探索" hidden><div id="swipe-root"></div></section>
+      <section id="insights" class="app-screen module-screen" aria-label="領養數據" hidden><div id="insights-root"></div></section>
+
+      <section id="saved" class="app-screen saved-screen" aria-labelledby="saved-heading" hidden>
+        <div class="screen-title"><h1 id="saved-heading">我的</h1></div>
+        <div id="account-root"></div>
+        <h2 class="saved-subhead">我的收藏</h2>
+        <div id="saved-list" aria-live="polite"></div>
+        <section id="matches-root" aria-live="polite" hidden>
+          <h2 class="saved-subhead">符合偏好的動物</h2>
+          <p id="matches-note" class="source-note"></p>
+          <div id="matches-list"></div>
+        </section>
+        <aside class="install-box" id="install-box">
+          <img src="/static/icon-192.png" width="44" height="44" alt="">
+          <div><strong>把等一個家放到主畫面</strong><p id="install-detail" hidden>在支援的瀏覽器選單選「安裝應用程式」或「加入主畫面」。</p></div>
+          <button type="button" class="app-action app-action-soft" id="install-button">安裝</button>
+        </aside>
+        <a href="#privacy-policy" class="privacy-link">資料與隱私</a>
+        <div id="account-footer"></div>
+      </section>
+
+      <section id="privacy-policy" class="app-screen privacy-screen" aria-labelledby="privacy-heading" hidden>
+        <a href="#saved" class="privacy-back">‹ 返回我的收藏</a>
+        <div class="screen-title"><h1 id="privacy-heading">資料與隱私</h1></div>
+        <section><h2>本機 Demo 帳戶</h2><p>示範帳戶、收藏、點讚和問卷儲存在這部電腦的 MongoDB。請使用示範資料。Google 和 Apple 的示範按鈕由本機處理。</p></section>
+        <section><h2>領養資料的來源</h2><p>動物檔案來自本機 MongoDB 中保存的機構官網快照。每張檔案顯示觀察日期和來源連結。</p></section>
+        <section><h2>到機構查詢領養</h2><p>領養入口會開啟機構的官方頁面。機構會依照其公布的條款處理你在其網站提供的資料。</p></section>
+      </section>
+    </main>
+
+    <nav class="app-tabs" aria-label="主要導航">
+      <a href="#home" data-screen="home"><span class="nav-glyph nav-glyph-home" aria-hidden="true"></span><span>首頁</span></a>
+      <a href="#discover" data-screen="discover"><span class="nav-glyph nav-glyph-discover" aria-hidden="true"></span><span>探索</span></a>
+      <a href="#insights" data-screen="insights"><span class="nav-glyph nav-glyph-insights" aria-hidden="true"></span><span>數據</span></a>
+      <a href="#saved" data-screen="saved"><span class="nav-glyph nav-glyph-saved" aria-hidden="true"></span><span>我的</span></a>
+    </nav>
+  </div>
+</body>
+</html>

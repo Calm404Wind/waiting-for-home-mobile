@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "等一個家｜香港貓狗領養",
+  "short_name": "等一個家",
+  "description": "瀏覽香港貓狗公開領養名錄，查閱官網照片、來源和領養紀錄。",
+  "lang": "zh-Hant-HK",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#fff4e3",
+  "background_color": "#fff4e3",
+  "icons": [
+    {"src": "/static/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any"},
+    {"src": "/static/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any"},
+    {"src": "/static/icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable"}
+  ]
+}
