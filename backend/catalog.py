@@ -3,6 +3,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import date
 from functools import lru_cache
+from itertools import islice
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -20,9 +21,11 @@ SPECIES = ['cat', 'dog']
 HERO_LISTING = 'listing_kirstens_zoo_c604ca5964538d'
 DISTRICT_SOURCE = 'https://data.gov.hk/tc-data/dataset/hk-had-json1-hong-kong-administrative-boundaries'
 PHOTO_EXTENSIONS = {'.avif', '.gif', '.jpeg', '.jpg', '.png', '.webp'}
+PHOTO_PACKS = {'hk_shelter_catalog_2026-10-20', 'hk_shelter_catalog_2026-11-23'}
 OBS = {'_id': 1, 'listing_id': 1, 'organisation_id': 1, 'snapshot_date': 1, 'name': 1, 'species': 1,
        'adoption_status': 1, 'status_raw': 1, 'age_range_years': 1, 'birth_date_evidence': 1,
-       'source_values_raw.age_raw': 1, 'centre_id': 1, 'source_url': 1}
+       'source_values_raw.age_raw': 1, 'source_values_raw.description_excerpt': 1, 'breed_raw': 1,
+       'sex': 1, 'centre_id': 1, 'source_url': 1}
 MEDIA = {'_id': 1, 'observation_id': 1, 'photo_order': 1, 'role': 1, 'archive_relative_path': 1,
          'source_photo_url': 1, 'publisher_page_url': 1, 'sha256': 1}
 
@@ -87,15 +90,25 @@ class Catalogue:
             raise LookupError('找不到已匯入的領養資料版本。')
         return release
 
-    def query_filter(self, release, species='', organisation_id='', status='listed', q=''):
+    def query_filter(self, release, species='', organisation_id='', status='listed', q='', centre_id=''):
         predicate = {'run_id': {'$in': release['run_ids']}, 'species': species or {'$in': SPECIES}, 'visibility': 'seen'}
         if organisation_id:
             predicate['organisation_id'] = organisation_id
+        if centre_id:
+            predicate['centre_id'] = centre_id
         if status != 'all':
             predicate['adoption_status'] = status
         if q.strip():
             pattern = {'$regex': re.escape(q.strip()), '$options': 'i'}
-            predicate['$or'] = [{'name': pattern}, {'legacy_record_id': pattern}]
+            term = q.strip().casefold()
+            geography = self.geography('centre_coordinates.json') or {}
+            centres = set(self.db.centres.distinct('_id', {'name': pattern}))
+            centres.update(ident for ident, coord in geography.items()
+                           if any(term in (coord.get(field) or '').casefold() for field in ('short_name', 'district_name')))
+            orgs = self.db.organisations.distinct('_id', {'name': pattern})
+            exact_id = {'$regex': '^' + re.escape(q.strip()) + '$', '$options': 'i'}
+            predicate['$or'] = [{'name': pattern}, {'legacy_record_id': exact_id}, {'centre_id': {'$in': list(centres)}},
+                                {'organisation_id': {'$in': orgs}}]
         return predicate
 
     def media_path(self, media):
@@ -106,7 +119,7 @@ class Catalogue:
         relative = Path(stored)
         if relative.is_absolute() or len(relative.parts) < 3 or relative.parts[1] != 'photos':
             return None
-        if relative.parts[0] not in {'hk_shelter_catalog_2026-10-20', 'hk_shelter_catalog_2026-11-23'}:
+        if relative.parts[0] not in PHOTO_PACKS:
             return None
         allowed = (root / relative.parts[0] / 'photos').resolve()
         path = (root / relative).resolve()
@@ -140,26 +153,45 @@ class Catalogue:
         organisation_ids = list({obs['organisation_id'] for obs in docs})
         listings = {row['_id']: row for row in self.db.listings.find({'_id': {'$in': listing_ids}}, {'group_kind': 1, 'identity_review': 1})}
         orgs = {row['_id']: row for row in self.db.organisations.find({'_id': {'$in': organisation_ids}})}
-        return listings, orgs
+        centre_ids = list({obs['centre_id'] for obs in docs if obs.get('centre_id')})
+        centres = {row['_id']: row['name'] for row in self.db.centres.find({'_id': {'$in': centre_ids}}, {'name': 1})}
+        return listings, orgs, centres
 
     def card(self, obs, refs, media=None):
-        listings, orgs = refs
+        listings, orgs, centres = refs
         age_key, age_label = age_value(obs, listings[obs['listing_id']])
         primary = self.photos(media, 1) if media else []
         state = obs['adoption_status']
+        centre_id = obs.get('centre_id')
+        coord = (self.geography('centre_coordinates.json') or {}).get(centre_id, {})
         return dict(id=obs['listing_id'], name=obs.get('name') or '名稱未公佈', species=obs['species'], age_label=age_label,
                     age_key=age_key, organisation=orgs[obs['organisation_id']]['name'], organisation_id=obs['organisation_id'],
                     status=state, status_label=STATUS_LABELS[state], photo_url=primary[0]['url'] if primary else None,
-                    centre_id=obs.get('centre_id'), source_url=http_url(obs.get('source_url')), snapshot_date=obs['snapshot_date'])
+                    centre_id=centre_id, centre_name=centres.get(centre_id), district=coord.get('district_name'),
+                    sex_key=obs.get('sex') if obs.get('sex') in {'male', 'female'} else None,
+                    breed=obs.get('breed_raw'), description=(obs.get('source_values_raw') or {}).get('description_excerpt'),
+                    source_url=http_url(obs.get('source_url')), snapshot_date=obs['snapshot_date'])
 
-    def items(self, species, organisation_id, status, q, page, page_size):
+    def items(self, species, organisation_id, status, q, page, page_size, centre_id='', age_key=''):
         release = self.release()
-        predicate = self.query_filter(release, species, organisation_id, status, q)
-        total = self.db.observations.count_documents(predicate)
-        docs = list(self.db.observations.find(predicate, OBS).sort([('snapshot_date', -1), ('name', 1), ('_id', 1)])
-                    .skip((page - 1) * page_size).limit(page_size))
+        predicate = self.query_filter(release, species, organisation_id, status, q, centre_id)
+        cursor = self.db.observations.find(predicate, OBS).sort([('snapshot_date', -1), ('name', 1), ('_id', 1)])
+        offset = (page - 1) * page_size
+        if age_key or q.strip():
+            docs = list(cursor)
+            refs = self.references(docs)
+            if age_key:
+                docs = [obs for obs in docs if age_value(obs, refs[0][obs['listing_id']])[0] == age_key]
+            if q.strip():
+                term = q.strip().casefold()
+                docs.sort(key=lambda obs: (obs.get('name') or '').strip().casefold() != term)
+            total = len(docs)
+            docs = docs[offset:offset + page_size]
+        else:
+            total = self.db.observations.count_documents(predicate)
+            docs = list(cursor.skip(offset).limit(page_size))
+            refs = self.references(docs)
         organisations = self.organisation_options(release)
-        refs = self.references(docs)
         photos = self.photo_map([row['_id'] for row in docs])
         return dict(items=[self.card(obs, refs, photos[obs['_id']]) for obs in docs], total=total, page=page, page_size=page_size,
                     organisations=organisations, release_date=release['catalogue_as_of'])
@@ -186,7 +218,6 @@ class Catalogue:
                                  source_photos=[dict(source_url=http_url(row['source_photo_url']), sha256=row.get('sha256'))
                                                 for row in media if http_url(row.get('source_photo_url'))]))
         male_female = {'male': '雄性', 'female': '雌性'}
-        centre = self.db.centres.find_one({'_id': latest['centre_id']}) if latest.get('centre_id') else None
         org = refs[1][latest['organisation_id']]
         contacts = org.get('public_contacts', [])
         contact = next((http_url(row.get('source_url')) for row in contacts
@@ -199,9 +230,8 @@ class Catalogue:
         note = '官網只提供這次可核對的觀察。' if len(history) == 1 else '兩次觀察對應同一則已比對的官網刊登。'
         if decision in {'pending', 'conflict', 'source_key_collision'}:
             note = '來源身份仍有待核對的欄位，時間線只顯示已連到此檔案的觀察。'
-        result.update(breed=latest.get('breed_raw'), sex=male_female.get(latest.get('sex')),
-                      description=latest.get('source_values_raw', {}).get('description_excerpt'),
-                      centre=centre.get('name') if centre else None, contact_url=contact or http_url(org.get('website_url')),
+        result.update(sex=male_female.get(latest.get('sex')), centre=result['centre_name'],
+                      contact_url=contact or http_url(org.get('website_url')),
                       centre_evidence_url=http_url(centre_evidence.get('location_reference_url')),
                       official_action_url=result['source_url'] if result['status'] in {'listed', 'foster_option'} else None,
                       photos=self.photos(photos[latest['_id']]), listing_url=http_url(latest.get('listing_url')),
@@ -255,7 +285,8 @@ class Catalogue:
         centre_filter = {'organisation_id': organisation_id} if organisation_id else {}
         for centre in self.db.centres.find(centre_filter).sort('name', 1):
             coord = dimensions.get(centre['_id'], {})
-            centres.append(dict(id=centre['_id'], name=centre['name'], organisation=all_orgs[centre['organisation_id']],
+            centres.append(dict(id=centre['_id'], name=centre['name'], short_name=coord.get('short_name') or centre['name'],
+                                district=coord.get('district_name'), organisation=all_orgs[centre['organisation_id']],
                                 organisation_id=centre['organisation_id'], address=centre['public_address'],
                                 longitude=coord.get('longitude'), latitude=coord.get('latitude'), count=placement[centre['_id']],
                                 organisation_listing_count=by_organisation[centre['organisation_id']],
@@ -278,8 +309,21 @@ class Catalogue:
     def overview(self):
         release = self.release()
         counts = {species: self.db.observations.count_documents(self.query_filter(release, species=species)) for species in SPECIES}
-        overview = dict(release_date=release['catalogue_as_of'], counts=counts,
-                        organisation_count=len(self.organisation_options(release)), featured=None)
+        overview = dict(release_date=release['catalogue_as_of'], counts=counts, total_listed=sum(counts.values()),
+                        organisation_count=len(self.organisation_options(release)), centre_count=self.db.centres.count_documents({}),
+                        hero_waiting=None, featured=None)
+        # Archive-free installs can still explore the catalogue without a featured photo.
+        if any((self.archive_root / pack / 'photos').is_dir() for pack in PHOTO_PACKS):
+            predicate = self.query_filter(release)
+            predicate['name'] = {'$type': 'string', '$nin': ['', '名稱未公佈']}
+            order = [('snapshot_date', -1), ('species', -1), ('name', 1), ('_id', 1)]
+            with self.db.observations.find(predicate, OBS).sort(order) as cursor:
+                while batch := list(islice(cursor, 24)):
+                    photos = self.photo_map([row['_id'] for row in batch])
+                    candidate = next((row for row in batch if self.photos(photos[row['_id']], 1)), None)
+                    if candidate:
+                        overview['hero_waiting'] = self.card(candidate, self.references([candidate]), photos[candidate['_id']])
+                        break
         case = self.detail(HERO_LISTING)
         if case:
             overview['featured'] = {key: case[key] for key in ('id', 'name', 'species', 'photo_url', 'organisation', 'status_label', 'snapshot_date')}

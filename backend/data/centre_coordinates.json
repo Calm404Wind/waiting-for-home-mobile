@@ -1,5 +1,6 @@
 {
   "spca_wan_chai": {
+    "short_name": "SPCA 灣仔總部",
     "longitude": 114.17886,
     "latitude": 22.28204,
     "source_url": "https://www.als.gov.hk/lookup?q=%E7%81%A3%E4%BB%94%E9%81%8B%E7%9B%9B%E8%A1%975%E8%99%9F&n=7",
@@ -22,6 +23,7 @@
     "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/hong-kong-centre-hq/"
   },
   "spca_tsing_yi": {
+    "short_name": "SPCA 青衣中心",
     "longitude": 114.11159,
     "latitude": 22.34691,
     "source_url": "https://www.als.gov.hk/lookup?q=%E9%9D%92%E8%A1%A3%E9%95%B7%E8%BC%9D%E8%B7%AF38%E8%99%9F&n=7",
@@ -43,6 +45,7 @@
     "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/the-spca-jockey-club-centennial-centre/"
   },
   "spca_kowloon": {
+    "short_name": "SPCA 九龍中心",
     "longitude": 114.17762,
     "latitude": 22.31133,
     "source_url": "https://www.als.gov.hk/lookup?q=%E4%BD%95%E6%96%87%E7%94%B0%E5%85%AC%E4%B8%BB%E9%81%93105%E8%99%9F&n=7",
@@ -65,6 +68,7 @@
     "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/kowloon-centre/"
   },
   "spca_sai_kung": {
+    "short_name": "SPCA 西貢中心",
     "longitude": 114.2727,
     "latitude": 22.38118,
     "source_url": "https://www.als.gov.hk/lookup?q=%E8%A5%BF%E8%B2%A2%E8%90%AC%E5%B9%B4%E8%A1%9765%E8%99%9F&n=7",
@@ -87,6 +91,7 @@
     "photo_source_url": "https://www.spca.org.hk/zh-hant/contact/spca-centres/sai-kung-adopt-a-pet-centre/"
   },
   "hkdr_ap_lei_chau": {
+    "short_name": "救狗之家鴨脷洲中心",
     "longitude": 114.15671,
     "latitude": 22.24416,
     "source_url": "https://www.als.gov.hk/lookup?q=13-15+Wai+Fung+Street+Ap+Lei+Chau&n=7",
@@ -107,6 +112,7 @@
     "geo_address": "3418911712T20140428"
   },
   "hkdr_tai_po": {
+    "short_name": "救狗之家大埔中心",
     "longitude": 114.15139,
     "latitude": 22.44675,
     "source_url": "https://www.als.gov.hk/lookup?q=6+Shek+Lin+Road+Tai+Po&n=7",
@@ -127,6 +133,7 @@
     "geo_address": "3364534146T20050430"
   },
   "paws_united_repulse_bay_cats": {
+    "short_name": "Paws United 淺水灣貓中心",
     "longitude": 114.19759,
     "latitude": 22.23635,
     "source_url": "https://www.als.gov.hk/lookup?q=the+pulse+28+Beach+Road+Repulse+Bay&n=7",
@@ -147,6 +154,7 @@
     "geo_address": "3840410848T20080918"
   },
   "paws_united_repulse_bay_dogs": {
+    "short_name": "Paws United 淺水灣狗中心",
     "longitude": 114.19759,
     "latitude": 22.23635,
     "source_url": "https://www.als.gov.hk/lookup?q=the+pulse+28+Beach+Road+Repulse+Bay&n=7",
@@ -167,6 +175,7 @@
     "geo_address": "3840410848T20080918"
   },
   "sai_kung_stray_friends_tai_lam_wu": {
+    "short_name": "西貢流浪狗大藍湖中心",
     "longitude": 114.23469,
     "latitude": 22.34754,
     "source_url": "https://www.als.gov.hk/lookup?q=%E8%A5%BF%E8%B2%A2%E5%A4%A7%E8%97%8D%E6%B9%96%E6%9D%91151%E8%99%9F&n=7",
@@ -187,6 +196,7 @@
     "geo_address": "4222323161T20050430"
   },
   "love_cats_kwun_tong": {
+    "short_name": "愛貓日子觀塘中心",
     "longitude": 114.22367,
     "latitude": 22.31203,
     "source_url": "https://www.als.gov.hk/lookup?q=%E5%B7%A7%E9%81%8B%E5%B7%A5%E6%A5%AD%E5%A4%A7%E5%BB%88+66+%E9%A7%BF%E6%A5%AD%E8%A1%97&n=7",
@@ -207,6 +217,7 @@
     "geo_address": "4109019229T20050430"
   },
   "saa_pak_sha": {
+    "short_name": "SAA 白沙村中心",
     "longitude": 114.02247,
     "latitude": 22.4247204,
     "source_url": "https://www.saa.org.hk/zh/about.php?id=5",
@@ -219,6 +230,7 @@
     "photo_source_url": "https://fpf.ccidahk.gov.hk/en/location/detail.php?id=1095"
   },
   "lap_sai_ying_pun": {
+    "short_name": "LAP 西營盤貓中心",
     "longitude": 114.14337,
     "latitude": 22.28654,
     "source_url": "https://www.als.gov.hk/lookup?q=11%20First%20Street%20Sai%20Ying%20Pun&n=7",
@@ -235,6 +247,7 @@
     "address_reference_url": "https://www.lap.org.hk/"
   },
   "lap_tsuen_wan": {
+    "short_name": "LAP 荃灣狗中心",
     "longitude": 114.10454,
     "latitude": 22.37873,
     "source_url": "https://www.als.gov.hk/lookup?q=187%20Tsuen%20King%20Circuit%20Tsuen%20Wan&n=7",
@@ -252,6 +265,7 @@
     "address_reference_url": "https://www.lap.org.hk/"
   },
   "hkaac_tuen_mun": {
+    "short_name": "香港動物領養中心（屯門）",
     "longitude": 113.9956817,
     "latitude": 22.4214267,
     "source_url": "https://hk-aac.org.hk/contact",

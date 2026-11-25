@@ -1,71 +1,83 @@
 const STYLES = `
 body:has(> .animal-sheet[open]) { overflow:hidden; }
 .animal-sheet,.animal-sheet * { box-sizing:border-box; }
-.animal-sheet { --as-paper:var(--app-paper,#fff8ef); --as-card:var(--app-surface,#fffdf9); --as-ink:var(--app-ink,#382921); --as-muted:var(--app-muted,#69574b); --as-line:var(--app-edge,#ead9c8); --as-accent:var(--app-orange,#f4a261); --as-link:var(--app-accent,#8b422e); display:none; position:fixed; inset:0; width:min(100%,var(--phone-width,460px)); max-width:100%; height:100dvh; max-height:100dvh; padding:0; margin:auto; border:0; color:var(--as-ink); background:var(--as-paper); overflow:hidden; font:inherit; }
+.animal-sheet { --as-paper:var(--app-paper,#fff3e0); --as-card:rgba(255,255,255,0.86); --as-ink:var(--app-ink,#4a3b32); --as-muted:var(--app-muted,#766255); --as-line:rgba(224,126,56,0.2); --as-accent:#f4a261; --as-link:#9c421f; display:none; position:fixed; inset:0; width:min(100%,540px); max-width:100%; height:100dvh; max-height:100dvh; padding:0; margin:auto; border:0; color:var(--as-ink); background:radial-gradient(circle at 100% 0%,rgba(244,162,97,.18),transparent 18rem),var(--as-paper); overflow:hidden; font:inherit; box-shadow:0 26px 64px -16px rgba(42,24,14,.35); }
 .animal-sheet[open] { display:grid; grid-template-rows:auto minmax(0,1fr) auto; }
-.animal-sheet::backdrop { background:#4d382b77; }
+.animal-sheet::backdrop { background:rgba(46,29,20,.54); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
 .animal-sheet :focus-visible { outline:2px solid var(--as-link); outline-offset:3px; }
-.as-top { display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center; gap:5px; padding:max(7px,env(safe-area-inset-top)) 12px 7px; border-bottom:1px solid var(--as-line); background:var(--as-card); }
-.as-top-title { margin:0; font-size:.94rem; font-weight:750; text-align:center; }
-.as-top-actions { display:flex; align-items:center; }
-.as-feedback { grid-column:1/-1; margin:0; padding:2px 5px 4px; color:var(--as-link); font-size:.86rem; }
+.as-top { display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center; gap:5px; padding:max(8px,env(safe-area-inset-top)) 14px 8px; border-bottom:1px solid var(--as-line); background:rgba(255,248,236,.92); backdrop-filter:blur(14px); }
+.as-top-title { margin:0; font-size:.95rem; font-weight:800; text-align:center; }
+.as-top-actions { display:flex; align-items:center; gap:3px; }
+.as-feedback { grid-column:1/-1; margin:0; padding:2px 5px 4px; color:var(--as-link); font-size:.85rem; font-weight:700; }
 .as-feedback:empty { display:none; }
-.as-icon { border:0; background:transparent; color:inherit; width:44px; height:44px; display:inline-grid; place-items:center; padding:0; font:inherit; cursor:pointer; border-radius:50%; }
-.as-icon[hidden],.animal-sheet img[hidden] { display:none; }
-.as-icon:hover,.as-icon[aria-pressed=true] { background:#f9e4d1; }
+.as-icon { border:0; background:transparent; color:inherit; width:44px; height:44px; display:inline-grid; place-items:center; padding:0; font:inherit; cursor:pointer; border-radius:13px; transition:background-color 160ms ease,transform 140ms ease; }
+.as-icon[hidden],.as-photo-slide [hidden] { display:none; }
+.as-icon:hover,.as-icon[aria-pressed=true] { background:#fde6cf; color:var(--as-link); }
+.as-icon:active { transform:scale(.95); }
 .as-icon:disabled { opacity:.45; cursor:default; }
 .as-back::before,.as-forward::before { content:''; width:9px; height:9px; border-bottom:2px solid currentColor; border-left:2px solid currentColor; transform:rotate(45deg); margin-left:3px; }
 .as-forward::before { transform:rotate(225deg); margin-left:0; margin-right:3px; }
-.as-like { font-size:1.43rem; line-height:1; color:var(--as-link); }
-.as-save,.as-share { width:auto; min-width:44px; font-size:.8rem; font-weight:750; }
-.as-scroll { min-height:0; overflow:auto; overscroll-behavior:contain; padding:14px 16px 24px; scroll-padding:12px; }
-.as-gallery { margin:0 0 14px; }
-.as-photo-strip { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; overscroll-behavior-x:contain; scroll-padding:0; scrollbar-width:none; border-radius:24px; background:#f3e4d5; }
+.as-like,.as-save,.as-share { display:inline-flex; align-items:center; justify-content:center; gap:5px; }
+.as-like { color:var(--as-link); }
+.as-like svg,.as-save svg { width:18px; height:18px; flex-shrink:0; display:block; }
+.as-like[aria-pressed=true] svg { fill:currentColor; }
+.as-save[aria-pressed=true] svg { fill:currentColor; }
+.as-save,.as-share { width:auto; min-width:44px; padding-inline:10px; font-size:.8rem; font-weight:800; }
+.as-scroll { min-height:0; overflow:auto; overscroll-behavior:contain; padding:16px 18px 28px; scroll-padding:12px; }
+.as-gallery { margin:0 0 16px; }
+.as-photo-strip { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; overscroll-behavior-x:contain; scroll-padding:0; scrollbar-width:none; border-radius:26px; background:#f3e4d5; box-shadow:0 12px 28px -10px rgba(74,43,24,.18); }
 .as-photo-strip::-webkit-scrollbar { display:none; }
-.as-photo-slide,.as-photo-empty { position:relative; flex:0 0 100%; width:100%; aspect-ratio:1.15; scroll-snap-align:start; display:grid; place-items:center; margin:0; overflow:hidden; background:#f3e5d7; color:var(--as-muted); font-size:.92rem; }
-.as-photo-empty { border-radius:24px; }
-.as-photo-slide img { position:absolute; width:100%; height:100%; object-fit:contain; inset:0; }
-.as-gallery-footer { min-height:46px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px 10px; align-items:center; font-size:.84rem; }
+.as-photo-slide,.as-photo-empty { position:relative; flex:0 0 100%; width:100%; aspect-ratio:1.12; scroll-snap-align:start; display:grid; place-items:center; margin:0; overflow:hidden; background:#f3e5d7; color:var(--as-muted); font-size:.92rem; }
+.as-photo-empty { border-radius:26px; }
+.as-photo-slide img { position:absolute; width:100%; height:100%; object-fit:cover; object-position:center 35%; inset:0; }
+.as-gallery-footer { min-height:46px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px 10px; align-items:center; font-size:.84rem; margin-top:4px; }
 .as-gallery-controls { display:flex; align-items:center; gap:2px; }
-.as-gallery-controls span { min-width:45px; text-align:center; font-variant-numeric:tabular-nums; }
-.as-gallery-footer a,.as-links a,.as-photo-list a { color:var(--as-link); text-decoration:underline; text-underline-offset:.21em; }
+.as-gallery-controls span { min-width:45px; text-align:center; font-variant-numeric:tabular-nums; font-weight:700; color:var(--as-muted); }
+.as-gallery-footer a,.as-links a,.as-photo-list a { color:var(--as-link); font-weight:700; text-decoration:underline; text-underline-offset:.24em; }
 .as-gallery-footer a { padding:9px 0; }
-.as-card { padding:17px; margin-bottom:13px; background:var(--as-card); border:1px solid var(--as-line); border-radius:21px; overflow-wrap:anywhere; }
-.as-card h2,.as-card h3 { margin:0; line-height:1.18; }
-.as-card h3 { font-size:1.18rem; }
-.as-name { margin-top:9px!important; font-size:clamp(2rem,10vw,3rem); font-family:Georgia,"Noto Serif TC","Songti TC","PMingLiU",serif; }
-.as-subtitle,.as-note,.as-description { color:var(--as-muted); margin:7px 0 0; font-size:.92rem; line-height:1.55; }
-.as-state { display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; background:#fbe6d4; color:#673727; font-size:.81rem; line-height:1.35; font-weight:650; }
-.as-state[data-status=adopted] { background:#eaf0df; color:#405537; }
-.as-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; margin:15px 0 0; }
-.as-fact { min-width:0; border-top:1px solid var(--as-line); padding:8px 0; }
-.as-fact dt { font-size:.78rem; color:var(--as-muted); }
-.as-fact dd { margin:2px 0 0; font-size:.93rem; font-weight:650; }
-.as-links { display:flex; flex-wrap:wrap; gap:5px 14px; margin:5px 0 0; font-size:.86rem; }
+.as-card { padding:18px 20px; margin-bottom:14px; background:#fffdf9; border:1px solid rgba(138,102,76,.15); border-radius:22px; overflow-wrap:anywhere; box-shadow:none; }
+.as-card h2,.as-card h3 { margin:0; line-height:1.2; font-family:var(--app-display,'Noto Serif TC',Georgia,serif); }
+.as-card h3 { font-size:1.12rem; font-weight:900; }
+.as-name { margin-top:6px!important; font-size:clamp(1.9rem,8.2vw,2.5rem); font-weight:900; letter-spacing:-.02em; font-family:var(--app-display,'Noto Serif TC',Georgia,serif); }
+.as-subtitle,.as-note,.as-description { color:var(--as-muted); margin:8px 0 0; font-size:.92rem; line-height:1.65; }
+.as-state { display:inline-block; padding:0; background:transparent; color:#a04423; font-size:.8rem; line-height:1.35; font-weight:800; letter-spacing:.02em; }
+.as-state[data-status=adopted] { background:transparent; color:#2b5c34; }
+.as-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:14px; margin:16px 0 0; }
+.as-fact { min-width:0; border-top:1px solid var(--as-line); padding:10px 0; }
+.as-fact dt { font-size:.76rem; font-weight:600; color:var(--as-muted); }
+.as-fact dd { margin:3px 0 0; font-size:.94rem; font-weight:800; }
+.as-links { display:flex; flex-wrap:wrap; gap:6px 16px; margin:8px 0 0; font-size:.85rem; }
 .as-links a { display:inline-block; padding:7px 0; }
-.as-history-list { list-style:none; margin:16px 0 0; padding:0 0 0 13px; border-left:2px solid #eed3bb; }
-.as-observation { position:relative; padding:0 0 16px 4px; }
+.as-prepare { font:inherit; font-weight:700; color:var(--as-link); border:0; background:transparent; padding:7px 0; text-decoration:underline; text-underline-offset:.24em; cursor:pointer; }
+.as-history-list { list-style:none; margin:16px 0 0; padding:0 0 0 15px; border-left:2px solid #ecc6a4; }
+.as-observation { position:relative; padding:0 0 18px 4px; }
 .as-observation:last-child { padding-bottom:0; }
-.as-observation::before { content:''; background:#c26442; border:2px solid var(--as-card); border-radius:50%; width:11px; height:11px; position:absolute; left:-19.5px; top:.37em; }
-.as-observation-heading { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; }
-.as-observation-heading time { font-size:.88rem; font-weight:650; }
-.as-photo-list { border-radius:12px; background:#fff4e8; padding:0 8px; margin:5px 0 0; font-size:.82rem; }
-.as-photo-list summary { cursor:pointer; color:var(--as-link); font-weight:650; padding:10px 4px; }
+.as-observation::before { content:''; background:#d66a24; border:2px solid #fffdf9; box-shadow:0 0 0 2px rgba(214,106,36,.24); border-radius:50%; width:11px; height:11px; position:absolute; left:-21.5px; top:.35em; }
+.as-observation-heading { display:flex; flex-wrap:wrap; align-items:center; gap:5px 9px; }
+.as-observation-heading time { font-size:.88rem; font-weight:800; font-variant-numeric:tabular-nums; }
+.as-photo-list { border-radius:14px; background:#fff6ea; padding:0 12px; margin:6px 0 0; font-size:.82rem; border:1px solid rgba(224,126,56,.18); }
+.as-photo-list summary { cursor:pointer; color:var(--as-link); font-weight:700; padding:10px 4px; }
 .as-photo-list ul { list-style:none; padding:0 4px 8px; margin:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(80px,1fr)); }
 .as-photo-list li a { display:block; padding:7px 0; }
 .as-photo-list .as-note { padding:0 4px 8px; margin:0; }
-.as-bottom { background:var(--as-card); border-top:1px solid var(--as-line); padding:9px 16px max(10px,env(safe-area-inset-bottom)); }
+.as-bottom { background:rgba(255,248,236,.95); backdrop-filter:blur(14px); border-top:1px solid var(--as-line); padding:10px 18px max(12px,env(safe-area-inset-bottom)); }
 .as-bottom[hidden] { display:none; }
-.as-cta,.as-retry { display:flex; justify-content:center; align-items:center; text-align:center; min-height:46px; color:#42291d; font:inherit; font-weight:750; border:1px solid #e69454; border-radius:15px; padding:7px 13px; text-decoration:none; background:var(--as-accent); cursor:pointer; }
+.as-cta,.as-retry { display:flex; justify-content:center; align-items:center; text-align:center; min-height:50px; color:#ffffff; font:inherit; font-weight:800; border:0; border-radius:18px; padding:10px 18px; text-decoration:none; background:linear-gradient(135deg,#e27832 0%,#c8581d 100%); box-shadow:0 12px 24px -8px rgba(200,88,29,.42); cursor:pointer; transition:transform 150ms ease,box-shadow 160ms ease,filter 150ms ease; }
 .as-cta { width:100%; }
 .as-cta:disabled { opacity:.6; cursor:wait; }
-.as-cta:hover,.as-retry:hover { background:#ed9050; }
+.as-cta:hover,.as-retry:hover { transform:translateY(-1px); filter:brightness(1.03); box-shadow:0 15px 28px -8px rgba(200,88,29,.5); }
+.as-cta:active,.as-retry:active { transform:scale(.985); }
 .as-retry { margin-top:14px; }
 .as-loading { min-height:170px; display:grid; align-content:center; justify-items:start; }
+@media (min-width:540px) { .animal-sheet { width:min(393px,calc(100vw - 48px)); height:min(812px,calc(100dvh - 64px)); border-radius:40px; border:1px solid var(--as-line); } }
 @media (prefers-reduced-motion:reduce) { .as-photo-strip { scroll-behavior:auto!important; } }
 `;
 
 const SPECIES = { cat: '貓', dog: '狗' };
+const ICONS = {
+  bookmark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h11v17L12 17l-5.5 3.5Z"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 5.8c-2.1-2.2-5.6-2.2-7.7 0L12 6.9l-1.1-1.1a5.3 5.3 0 0 0-7.7 0 5.7 5.7 0 0 0 0 7.9L12 22l8.8-8.3a5.7 5.7 0 0 0 0-7.9Z"/></svg>',
+};
 const HISTORY_KEY = 'waitingForHomeAnimal';
 const isListingId = value => typeof value === 'string' && /^listing_[\w-]{1,200}$/.test(value);
 let activeProfile;
@@ -147,11 +159,12 @@ function gallery(item, name) {
   for (const [index, photo] of images.entries()) {
     const slide = element('figure', 'as-photo-slide');
     const placeholder = element('span', '', '照片暫不可讀');
+    placeholder.hidden = true;
     const picture = element('img');
     picture.alt = `${name} 的機構照片${images.length > 1 ? ` ${index + 1}` : ''}`;
     picture.draggable = false;
     picture.loading = index ? 'lazy' : 'eager';
-    picture.addEventListener('error', () => { picture.hidden = true; });
+    picture.addEventListener('error', () => { picture.hidden = true; placeholder.hidden = false; });
     picture.src = photo.url;
     slide.append(placeholder, picture);
     strip.append(slide);
@@ -176,7 +189,7 @@ function gallery(item, name) {
     previous.disabled = current === 0;
     next.disabled = current === images.length - 1;
     original.replaceChildren();
-    appendSource(original, '照片原始來源', images[current].source);
+    appendSource(original, '照片來源 ↗', images[current].source);
   }
   function go(index) {
     if (index < 0 || index >= images.length) return;
@@ -227,8 +240,8 @@ function timeline(item) {
     header.append(observedAt, state(observation.status_label));
     row.append(header);
     const urls = element('div', 'as-links');
-    appendSource(urls, '當次原始檔案', observation.source_url);
-    if (observation.listing_url !== observation.source_url) appendSource(urls, '當次官網名錄', observation.listing_url);
+    appendSource(urls, '原始紀錄 ↗', observation.source_url);
+    if (observation.listing_url !== observation.source_url) appendSource(urls, '官網名錄 ↗', observation.listing_url);
     if (urls.childElementCount) row.append(urls);
 
     const refs = element('ul');
@@ -269,25 +282,36 @@ function view(body, footer, item, onApply) {
     facts.append(fact);
   }
   if (facts.childElementCount) summary.append(facts);
-  const urls = element('div', 'as-links');
-  appendSource(urls, '動物原始檔案', item.source_url);
-  if (item.centre_evidence_url !== item.source_url) appendSource(urls, '位置查核來源', item.centre_evidence_url);
-  if (item.contact_url !== item.source_url) appendSource(urls, '機構聯絡方式', item.contact_url);
-  if (urls.childElementCount) summary.append(urls);
-
   body.replaceChildren(gallery(item, name), summary);
   if (item.description) {
     const about = element('section', 'as-card');
-    about.append(element('h3', '', '機構介紹'), element('p', 'as-description', item.description));
+    about.append(element('h3', '', `認識${name}`), element('p', 'as-description', item.description));
+    if (/(?:…|\.{3})$/.test(item.description.trim())) {
+      const more = element('div', 'as-links');
+      appendSource(more, '到機構官網閱讀完整介紹 ↗', item.source_url);
+      if (more.childElementCount) about.append(more);
+    }
     body.append(about);
   }
+  const listed = ['listed', 'foster_option'].includes(item.status);
+  const official = sourceUrl(item.official_action_url) || sourceUrl(item.source_url);
+  const contact = sourceUrl(item.contact_url);
+  const sources = element('section', 'as-card');
+  const urls = element('div', 'as-links');
+  appendSource(urls, '原始檔案 ↗', item.source_url);
+  if (item.centre_evidence_url !== item.source_url) appendSource(urls, '位置來源 ↗', item.centre_evidence_url);
+  if (!listed && contact && contact !== item.source_url) appendSource(urls, '聯絡機構 ↗', contact);
+  if (listed && onApply && official) {
+    const apply = button('as-prepare', '準備申請領養', () => onApply(item, apply), '準備申請領養');
+    urls.append(apply);
+  }
+  if (urls.childElementCount) {
+    sources.append(element('h3', '', '機構與來源'), urls);
+    body.append(sources);
+  }
   body.append(timeline(item));
-  if (['listed', 'foster_option'].includes(item.status)) {
-    const destination = sourceUrl(item.official_action_url) || sourceUrl(item.source_url);
-    let cta = destination && link(item.status === 'listed' ? '前往機構查詢領養' : '前往機構查詢領養或暫養', destination, 'as-cta');
-    if (destination && onApply) {
-      cta = button('as-cta', '申請領養', () => onApply(item, cta), '申請領養');
-    }
+  if (listed) {
+    const cta = link(contact ? '向機構查詢 ↗' : '查看官網領養檔案 ↗', contact || official, 'as-cta');
     if (cta) { footer.replaceChildren(cta); footer.hidden = false; }
   }
 }
@@ -359,10 +383,10 @@ function showAnimal(listingId, { api, isSaved, toggleSaved, isLiked, toggleLike,
   function updateActions() {
     const saved = Boolean(isSaved?.(listingId));
     const liked = Boolean(isLiked?.(listingId));
-    save.textContent = saved ? '已收藏' : '收藏';
+    save.innerHTML = `${ICONS.bookmark}<span>${saved ? '已收藏' : '收藏'}</span>`;
     save.setAttribute('aria-pressed', String(saved));
     save.setAttribute('aria-label', saved ? '取消收藏' : '收藏這則檔案');
-    like.textContent = liked ? '♥' : '♡';
+    like.innerHTML = ICONS.heart;
     like.setAttribute('aria-pressed', String(liked));
     like.setAttribute('aria-label', liked ? '取消點讚' : '點讚這則檔案');
   }

@@ -3,98 +3,382 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#fff4e3">
+  <meta name="theme-color" content="#fff3e0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="滑動探索香港貓狗的公開領養名錄、領養中心和官網個案紀錄。">
+  <meta property="og:title" content="等一個家｜香港貓狗領養">
+  <meta property="og:description" content="滑動探索香港貓狗的公開領養名錄、領養中心和官網個案紀錄。">
   <title>等一個家｜香港貓狗領養</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/static/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="/static/icon-192.png">
-  <link rel="stylesheet" href="/static/app.css">
-  <script type="module" src="/static/mobile.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&display=swap">
+  <link rel="stylesheet" href="/static/app.css?v=21">
+  <script type="module" src="/static/mobile.js?v=21"></script>
 </head>
 <body>
-  <div class="mobile-app" id="mobile-app">
+  <div class="iphone-stage">
+    <div class="iphone-frame">
+      <span class="iphone-btn iphone-btn-action" aria-hidden="true"></span>
+      <span class="iphone-btn iphone-btn-vol-up" aria-hidden="true"></span>
+      <span class="iphone-btn iphone-btn-vol-down" aria-hidden="true"></span>
+      <span class="iphone-btn iphone-btn-power" aria-hidden="true"></span>
+      <div class="mobile-app" id="mobile-app">
+        <div class="iphone-status-bar" aria-hidden="true">
+          <span class="iphone-time" id="iphone-time">9:41</span>
+          <span class="iphone-island"><span class="iphone-camera"></span></span>
+          <span class="iphone-indicators">
+            <svg viewBox="0 0 18 12" fill="currentColor" width="16" height="11">
+              <rect x="0" y="7.5" width="3" height="4.5" rx="1"/>
+              <rect x="4.5" y="5" width="3" height="7" rx="1"/>
+              <rect x="9" y="2.5" width="3" height="9.5" rx="1"/>
+              <rect x="13.5" y="0" width="3" height="12" rx="1"/>
+            </svg>
+            <svg viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" width="15" height="11">
+              <path d="M1.4 4.1a9.8 9.8 0 0 1 13.2 0"/>
+              <path d="M4.1 6.9a6 6 0 0 1 7.8 0"/>
+              <circle cx="8" cy="10.1" r="1.15" fill="currentColor" stroke="none"/>
+            </svg>
+            <svg viewBox="0 0 26 12" fill="none" width="23" height="11">
+              <rect x="0.75" y="0.75" width="21.5" height="10.5" rx="3" stroke="currentColor" stroke-opacity="0.45" stroke-width="1.3"/>
+              <rect x="2.6" y="2.6" width="17.8" height="6.8" rx="1.6" fill="currentColor"/>
+              <path d="M23.8 4.2v3.6a1.5 1.5 0 0 0 0-3.6Z" fill="currentColor" fill-opacity="0.5"/>
+            </svg>
+          </span>
+        </div>
     <header class="app-header">
       <a href="#home" class="app-brand" aria-label="等一個家首頁">
-        <img src="/static/icon-192.png" width="36" height="36" alt="">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <ellipse cx="12" cy="15.3" rx="5.2" ry="4.3"></ellipse>
+            <ellipse cx="5.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+            <ellipse cx="18.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+            <ellipse cx="9.2" cy="5.7" rx="2" ry="2.6"></ellipse>
+            <ellipse cx="14.8" cy="5.7" rx="2" ry="2.6"></ellipse>
+          </svg>
+        </span>
         <span>等一個家</span>
       </a>
+
+      <nav class="app-desktop-nav" aria-label="桌面版主要導航">
+        <a href="#home" data-screen="home">首頁</a>
+        <a href="#discover" data-screen="discover">滑動探索</a>
+        <a href="#insights" data-screen="insights">領養數據</a>
+        <a href="#saved" data-screen="saved">我的檔案</a>
+      </nav>
+
       <a href="#saved" class="app-bookmarks" aria-label="我的收藏">
-        <span class="nav-glyph nav-glyph-saved" aria-hidden="true"></span><span>收藏</span><span id="header-count" hidden></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6.5 3.5h11v17L12 17l-5.5 3.5Z"></path>
+        </svg>
+        <span>收藏</span>
+        <span id="header-count" hidden></span>
       </a>
     </header>
 
     <main class="app-content" id="app-content">
       <section id="home" class="app-screen home-screen" aria-labelledby="home-heading">
-        <div class="home-intro">
-          <h1 id="home-heading">遇見等家的<br><em>貓和狗。</em></h1>
-          <p>滑過香港救援機構的領養檔案，認識牠們，再到官網了解如何領養。</p>
-          <a href="#discover" class="app-action app-action-main">開始滑動探索<span aria-hidden="true">›</span></a>
+        <div class="home-greeting-bar">
+          <div>
+            <p id="home-date" class="home-date-kicker">香港公開領養</p>
+            <p id="home-greeting" class="home-greeting-text">你好</p>
+          </div>
+          <a href="#privacy-policy" class="home-source-link">資料與隱私</a>
         </div>
 
-        <div id="home-status" class="home-status" role="status"></div>
-        <div class="home-totals" id="home-totals" hidden>
-          <div><strong id="cats-count"></strong><span>待領養貓檔案</span></div>
-          <div><strong id="dogs-count"></strong><span>待領養狗檔案</span></div>
-          <a href="#insights" aria-label="查看領養數據"><span class="nav-glyph nav-glyph-insights" aria-hidden="true"></span></a>
-        </div>
-        <p id="home-release" class="source-note" hidden></p>
+        <div class="home-main-col">
+          <div class="hero-card">
+            <div class="hero-top">
+              <div class="hero-copy">
+                <h1 id="home-heading">在香港，<br>牠們正在<em>等待你</em></h1>
+                <p class="hero-lead">全港公開領養名錄 · 以領養代替購買</p>
+              </div>
+              <button type="button" id="hero-photo-btn" class="hero-photo" aria-label="查看待領養動物檔案">
+                <div class="hero-photo-fallback" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <ellipse cx="12" cy="15.3" rx="5.2" ry="4.3"></ellipse>
+                    <ellipse cx="5.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+                    <ellipse cx="18.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+                    <ellipse cx="9.2" cy="5.7" rx="2" ry="2.6"></ellipse>
+                    <ellipse cx="14.8" cy="5.7" rx="2" ry="2.6"></ellipse>
+                  </svg>
+                </div>
+                <img id="hero-photo" alt="" referrerpolicy="no-referrer" hidden>
+                <span id="hero-photo-caption" class="hero-photo-caption" hidden></span>
+              </button>
+            </div>
 
-        <div class="home-story" id="home-story" hidden>
-          <h2>從等待到有家</h2>
-          <button type="button" id="story-button" class="home-film">
-            <img id="story-photo" alt="" width="800" height="560">
-            <span class="home-film-caption">
-              <span><strong id="story-name"></strong><span id="story-organisation"></span></span>
-              <span class="home-film-action">看狀態紀錄</span>
-            </span>
-          </button>
+            <a href="#discover" class="explore-button">
+              <span>開始探索</span>
+              <span class="explore-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14m-5-5 5 5-5 5"></path>
+                </svg>
+              </span>
+            </a>
+          </div>
         </div>
-        <section class="home-story" aria-labelledby="learn-heading">
-          <h2 id="learn-heading">領養前先讀</h2>
+
+        <div class="home-stats-col">
+          <div id="home-status" class="home-status" role="status"></div>
+
+          <div class="stats-section" id="home-totals" hidden>
+            <div class="stats-heading">
+              <div>
+                <h2>全港領養概況</h2>
+                <p id="home-release" class="source-note"></p>
+              </div>
+              <a href="#insights" class="stats-more-link">數據看板 ›</a>
+            </div>
+
+            <div class="overview-board">
+              <div class="overview-animals">
+                <div class="overview-total">
+                  <strong id="total-count" class="overview-total-num">—</strong>
+                  <span class="overview-total-label">待領養檔案</span>
+                </div>
+
+                <div class="overview-species-group">
+                  <div class="overview-species-item is-cat" id="cats-stat" aria-label="貓咪">
+                    <span class="species-symbol" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5.2 3.4c-.5-.3-1.2.1-1.2.7v6.6C4 16 7.5 20 12 20s8-4 8-9.3V4.1c0-.6-.7-1-1.2-.7L15.1 6a9.6 9.6 0 0 0-6.2 0L5.2 3.4Z"/>
+                        <circle cx="9.2" cy="12" r="1.25" fill="#fffdf9"/>
+                        <circle cx="14.8" cy="12" r="1.25" fill="#fffdf9"/>
+                        <path d="M12 14.8 10.7 13.5h2.6L12 14.8Z" fill="#fffdf9"/>
+                      </svg>
+                    </span>
+                    <strong id="cats-count">—</strong>
+                  </div>
+                  <div class="overview-species-item is-dog" id="dogs-stat" aria-label="狗狗">
+                    <span class="species-symbol" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5.6 5.4c-1.8.8-3 3.2-2.7 6.3.2 1.7 1.3 2.5 2.4 2.1.4-.1.7-.4.9-.8.6 3.9 3 6.5 5.8 6.5s5.2-2.6 5.8-6.5c.2.4.5.7.9.8 1.1.4 2.2-.4 2.4-2.1.3-3.1-.9-5.5-2.7-6.3-1-.4-2.1-.1-2.8.6a8.6 8.6 0 0 0-7.2 0c-.7-.7-1.8-1-2.8-.6Z"/>
+                        <circle cx="9.5" cy="11.2" r="1.2" fill="#fffdf9"/>
+                        <circle cx="14.5" cy="11.2" r="1.2" fill="#fffdf9"/>
+                        <ellipse cx="12" cy="14.3" rx="1.8" ry="1.25" fill="#fffdf9"/>
+                      </svg>
+                    </span>
+                    <strong id="dogs-count">—</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="overview-ratio-bar" aria-hidden="true">
+                <span id="cats-ratio" class="ratio-cat" style="width: 44%"></span>
+                <span id="dogs-ratio" class="ratio-dog" style="width: 56%"></span>
+              </div>
+
+              <a href="#insights?tab=map" class="overview-org-link">
+                <span class="overview-org-rel">
+                  <span><strong id="orgs-count">—</strong> 間救援機構</span>
+                  <span class="overview-rel-arrow" aria-hidden="true">→</span>
+                  <span>已收錄 <strong id="centres-count">—</strong> 處實體中心</span>
+                </span>
+                <span class="overview-org-chevron" aria-hidden="true">›</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="home-story" id="home-story" hidden>
+            <div class="section-head-row">
+              <h2>從等待到有家</h2>
+            </div>
+            <button type="button" id="story-button" class="success-story">
+              <span class="story-photo">
+                <img id="story-photo" alt="" width="240" height="240" referrerpolicy="no-referrer">
+              </span>
+              <span class="story-copy">
+                <small id="story-organisation"></small>
+                <strong id="story-name"></strong>
+                <span id="story-timeline" class="story-timeline-text"></span>
+              </span>
+              <span class="story-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14m-5-5 5 5-5 5"></path>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <section class="adoption-knowledge" aria-labelledby="learn-heading">
+          <header class="knowledge-header">
+            <h2 id="learn-heading">領養前必讀</h2>
+          </header>
           <div id="home-articles" class="learn-tiles"></div>
         </section>
       </section>
 
-      <section id="discover" class="app-screen module-screen" aria-label="滑動探索" hidden><div id="swipe-root"></div></section>
-      <section id="insights" class="app-screen module-screen" aria-label="領養數據" hidden><div id="insights-root"></div></section>
+      <section id="discover" class="app-screen module-screen" aria-label="滑動探索" hidden>
+        <div id="swipe-root"></div>
+      </section>
+
+      <section id="insights" class="app-screen module-screen" aria-label="領養數據" hidden>
+        <div id="insights-root"></div>
+      </section>
 
       <section id="saved" class="app-screen saved-screen" aria-labelledby="saved-heading" hidden>
-        <div class="screen-title"><h1 id="saved-heading">我的</h1></div>
+        <div class="screen-title sr-only"><h1 id="saved-heading">我的檔案</h1></div>
         <div id="account-root"></div>
-        <h2 class="saved-subhead">我的收藏</h2>
+
+        <section class="profile-quick-section" aria-labelledby="quick-nav-heading">
+          <div class="profile-section-heading">
+            <h2 id="quick-nav-heading">常用功能</h2>
+          </div>
+          <div class="quick-links-grid">
+            <a href="#discover" class="quick-link-item">
+              <span class="feature-icon feature-orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <ellipse cx="12" cy="15.3" rx="5.2" ry="4.3"></ellipse>
+                  <ellipse cx="5.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+                  <ellipse cx="18.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+                  <ellipse cx="9.2" cy="5.7" rx="2" ry="2.6"></ellipse>
+                  <ellipse cx="14.8" cy="5.7" rx="2" ry="2.6"></ellipse>
+                </svg>
+              </span>
+              <strong>探索檔案</strong>
+            </a>
+            <button type="button" id="saved-guide-btn" class="quick-link-item">
+              <span class="feature-icon feature-amber" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 3.5h9l3 3V21H6Z"></path>
+                  <path d="M14.8 3.5v4h3.1M9 12.5c1.4-1.5 4.6-1.5 6 0-1.3 2-3 3.1-3 3.1S10.3 14.5 9 12.5Z"></path>
+                </svg>
+              </span>
+              <strong>領養流程</strong>
+            </button>
+            <a href="#insights?tab=map" class="quick-link-item">
+              <span class="feature-icon feature-teal" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"></path>
+                  <circle cx="12" cy="10" r="2"></circle>
+                </svg>
+              </span>
+              <strong>中心地圖</strong>
+            </a>
+            <a href="#privacy-policy" class="quick-link-item">
+              <span class="feature-icon feature-rose" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3 5 6v6c0 4.5 3 8.3 7 9.5 4-1.2 7-5 7-9.5V6l-7-3Z"></path>
+                  <path d="m9.5 12 1.8 1.8 3.5-3.6"></path>
+                </svg>
+              </span>
+              <strong>資料與隱私</strong>
+            </a>
+          </div>
+        </section>
+
+        <div class="profile-section-heading saved-heading-row">
+          <h2 class="saved-subhead">我的收藏</h2>
+        </div>
         <div id="saved-list" aria-live="polite"></div>
+
         <section id="matches-root" aria-live="polite" hidden>
-          <h2 class="saved-subhead">符合偏好的動物</h2>
+          <div class="profile-section-heading saved-heading-row">
+            <h2 class="saved-subhead">推薦配對</h2>
+          </div>
           <p id="matches-note" class="source-note"></p>
           <div id="matches-list"></div>
         </section>
+
         <aside class="install-box" id="install-box">
-          <img src="/static/icon-192.png" width="44" height="44" alt="">
-          <div><strong>把等一個家放到主畫面</strong><p id="install-detail" hidden>在支援的瀏覽器選單選「安裝應用程式」或「加入主畫面」。</p></div>
+          <img src="/static/icon-192.png" width="44" height="44" alt="" referrerpolicy="no-referrer">
+          <div>
+            <strong>加入主畫面</strong>
+            <p id="install-detail" hidden>從瀏覽器選單點選「加入主畫面」。</p>
+          </div>
           <button type="button" class="app-action app-action-soft" id="install-button">安裝</button>
         </aside>
-        <a href="#privacy-policy" class="privacy-link">資料與隱私</a>
-        <div id="account-footer"></div>
+
+        <div class="saved-footer-links">
+          <div id="account-footer"></div>
+        </div>
       </section>
 
       <section id="privacy-policy" class="app-screen privacy-screen" aria-labelledby="privacy-heading" hidden>
-        <a href="#saved" class="privacy-back">‹ 返回我的收藏</a>
-        <div class="screen-title"><h1 id="privacy-heading">資料與隱私</h1></div>
-        <section><h2>本機 Demo 帳戶</h2><p>示範帳戶、收藏、點讚和問卷儲存在這部電腦的 MongoDB。請使用示範資料。Google 和 Apple 的示範按鈕由本機處理。</p></section>
-        <section><h2>領養資料的來源</h2><p>動物檔案來自本機 MongoDB 中保存的機構官網快照。每張檔案顯示觀察日期和來源連結。</p></section>
-        <section><h2>到機構查詢領養</h2><p>領養入口會開啟機構的官方頁面。機構會依照其公布的條款處理你在其網站提供的資料。</p></section>
+        <a id="privacy-back" href="#saved" class="privacy-back">‹ 返回</a>
+        <div class="privacy-hero">
+          <h1 id="privacy-heading">資料與隱私</h1>
+          <p class="privacy-lead">整理全港公開救援機構領養名錄；正式申請均由各機構官網直接處理。</p>
+        </div>
+
+        <div class="privacy-grid">
+          <section class="privacy-card">
+            <span class="privacy-index">01</span>
+            <h2>本機 Demo 帳戶</h2>
+            <p>收藏、點讚與問卷僅儲存在本服務端供體驗使用；Google 與 Apple 模擬登入不會連接個人帳號。</p>
+          </section>
+
+          <section class="privacy-card">
+            <span class="privacy-index">02</span>
+            <h2>公開快照來源</h2>
+            <p>動物檔案整理自香港救援機構公開網頁快照，最新狀態以各機構官網即時公布為準。</p>
+          </section>
+
+          <section class="privacy-card">
+            <span class="privacy-index">03</span>
+            <h2>機構查詢與申請</h2>
+            <p>點擊申請或官網連結將開啟對應機構頁面，所提交資料依該機構私隱條款獨立處理。</p>
+          </section>
+
+          <section class="privacy-card">
+            <span class="privacy-index">04</span>
+            <h2>Google Maps 服務條款</h2>
+            <p>中心地圖顯示機構公開地址。啟用 Google 地圖或開啟其連結時，適用 <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">Google Maps 最終使用者額外服務條款</a> 及 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google 隱私權政策</a>。</p>
+          </section>
+        </div>
       </section>
     </main>
 
     <nav class="app-tabs" aria-label="主要導航">
-      <a href="#home" data-screen="home"><span class="nav-glyph nav-glyph-home" aria-hidden="true"></span><span>首頁</span></a>
-      <a href="#discover" data-screen="discover"><span class="nav-glyph nav-glyph-discover" aria-hidden="true"></span><span>探索</span></a>
-      <a href="#insights" data-screen="insights"><span class="nav-glyph nav-glyph-insights" aria-hidden="true"></span><span>數據</span></a>
-      <a href="#saved" data-screen="saved"><span class="nav-glyph nav-glyph-saved" aria-hidden="true"></span><span>我的</span></a>
+      <a href="#home" data-screen="home">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 10.5 9-7 9 7"></path>
+            <path d="M5.5 9.5V20h13V9.5"></path>
+            <path d="M10 20v-5.5h4V20"></path>
+          </svg>
+        </span>
+        <span class="nav-label">首頁</span>
+      </a>
+      <a href="#discover" data-screen="discover">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <ellipse cx="12" cy="15.3" rx="5.2" ry="4.3"></ellipse>
+            <ellipse cx="5.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+            <ellipse cx="18.5" cy="10" rx="2.1" ry="2.7"></ellipse>
+            <ellipse cx="9.2" cy="5.7" rx="2" ry="2.6"></ellipse>
+            <ellipse cx="14.8" cy="5.7" rx="2" ry="2.6"></ellipse>
+          </svg>
+        </span>
+        <span class="nav-label">探索</span>
+      </a>
+      <a href="#insights" data-screen="insights">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20V11M10 20V5M16 20v-7M22 20H2"></path>
+            <path d="m4 8 6-4 6 6 5-4"></path>
+          </svg>
+        </span>
+        <span class="nav-label">數據</span>
+      </a>
+      <a href="#saved" data-screen="saved">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M5 20a7 7 0 0 1 14 0"></path>
+          </svg>
+        </span>
+        <span class="nav-label">我的</span>
+      </a>
     </nav>
+    <div class="iphone-home-indicator" aria-hidden="true"><span></span></div>
+      </div>
+    </div>
   </div>
 </body>
 </html>

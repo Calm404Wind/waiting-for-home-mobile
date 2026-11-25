@@ -91,11 +91,18 @@ def overview():
     return catalogue.overview()
 
 
+@app.get('/api/maps-config')
+def maps_config():
+    return {'apiKey': os.environ.get('ADOPTION_GOOGLE_MAPS_BROWSER_KEY', '')}
+
+
 @app.get('/api/listings')
 def listings(species: Species = '', organisation_id: Annotated[str, Query(max_length=80)] = '',
              status: BrowseStatus = 'listed', q: Annotated[str, Query(max_length=100)] = '',
-             page: Annotated[int, Query(ge=1, le=10000)] = 1, page_size: Annotated[int, Query(ge=1, le=60)] = 12):
-    return catalogue.items(species, organisation_id, status, q, page, page_size)
+             page: Annotated[int, Query(ge=1, le=10000)] = 1, page_size: Annotated[int, Query(ge=1, le=60)] = 12,
+             centre_id: Annotated[str, Query(max_length=100)] = '',
+             age_key: Literal['', 'young', 'adult', 'senior', 'group', 'unknown'] = ''):
+    return catalogue.items(species, organisation_id, status, q, page, page_size, centre_id, age_key)
 
 
 @app.get('/api/listings/{listing_id}')

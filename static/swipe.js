@@ -1,62 +1,658 @@
 const PAGE_SIZE = 14;
 const SPECIES = [['', '全部'], ['cat', '貓咪'], ['dog', '狗狗'], ['other', '其他']];
 const number = new Intl.NumberFormat('zh-HK');
+
+const ICONS = {
+  guide: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h9l3 3V21H6Z"/><path d="M14.8 3.5v4h3.1M9 12.5c1.4-1.5 4.6-1.5 6 0-1.3 2-3 3.1-3 3.1S10.3 14.5 9 12.5Z"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
+  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>`,
+  bookmark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h11v17L12 17l-5.5 3.5Z"/></svg>`,
+  profile: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M8.5 8.5h7M8.5 12.5h7M8.5 16.2h4.2"/></svg>`,
+  undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M20 19v-4a6 6 0 0 0-6-6H4"/></svg>`,
+  paw: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="15.3" rx="5.2" ry="4.3"/><ellipse cx="5.5" cy="10" rx="2.1" ry="2.7"/><ellipse cx="18.5" cy="10" rx="2.1" ry="2.7"/><ellipse cx="9.2" cy="5.7" rx="2" ry="2.6"/><ellipse cx="14.8" cy="5.7" rx="2" ry="2.6"/></svg>`,
+  cat: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.2 3.4c-.5-.3-1.2.1-1.2.7v6.6C4 16 7.5 20 12 20s8-4 8-9.3V4.1c0-.6-.7-1-1.2-.7L15.1 6a9.6 9.6 0 0 0-6.2 0L5.2 3.4Z"/><circle cx="9.2" cy="12" r="1.25" fill="#fffdf9"/><circle cx="14.8" cy="12" r="1.25" fill="#fffdf9"/><path d="M12 14.8 10.7 13.5h2.6L12 14.8Z" fill="#fffdf9"/></svg>`,
+  dog: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.6 5.4c-1.8.8-3 3.2-2.7 6.3.2 1.7 1.3 2.5 2.4 2.1.4-.1.7-.4.9-.8.6 3.9 3 6.5 5.8 6.5s5.2-2.6 5.8-6.5c.2.4.5.7.9.8 1.1.4 2.2-.4 2.4-2.1.3-3.1-.9-5.5-2.7-6.3-1-.4-2.1-.1-2.8.6a8.6 8.6 0 0 0-7.2 0c-.7-.7-1.8-1-2.8-.6Z"/><circle cx="9.5" cy="11.2" r="1.2" fill="#fffdf9"/><circle cx="14.5" cy="11.2" r="1.2" fill="#fffdf9"/><ellipse cx="12" cy="14.3" rx="1.8" ry="1.25" fill="#fffdf9"/></svg>`,
+};
+
 const style = `
-.swipe-screen { --deck-ink:#342820; --deck-muted:#6b574b; --deck-apricot:#f4a261; --deck-border:#eadac8; --deck-paper:#fffbf4; color:var(--deck-ink); padding:.15rem 0 1rem; overflow-x:clip; }
-.swipe-screen [hidden] { display:none!important; }
-.swipe-screen h1,.swipe-screen h2,.swipe-screen p { margin:0; }
-.swipe-screen button { font:inherit; cursor:pointer; }
-.swipe-heading { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.85rem; }
-.swipe-heading h1 { font-size:clamp(1.75rem,7vw,2.1rem); letter-spacing:-.055em; line-height:1.1; }
-.swipe-heading-actions { display:flex; align-items:center; gap:.35rem; }
-.swipe-search-toggle { min-width:44px; min-height:44px; padding:.25rem .65rem; background:var(--deck-paper); color:var(--deck-ink); border:1px solid var(--deck-border); border-radius:12px; font-size:.84rem!important; font-weight:750!important; }
-.swipe-search { display:block; margin-bottom:.65rem; }
-.swipe-search input { width:100%; min-height:44px; border:1px solid var(--deck-border); padding:.45rem .75rem; border-radius:12px; background:var(--deck-paper); color:var(--deck-ink); font:inherit; }
-.swipe-filterbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.6rem .4rem; margin-bottom:.65rem; }
-.swipe-filters { display:flex; gap:.38rem; }
-.swipe-chip { min-height:40px; border-radius:999px; padding:.35rem .75rem; border:1px solid var(--deck-border); background:var(--deck-paper); color:var(--deck-ink); white-space:nowrap; font-size:.88rem!important; font-weight:700!important; }
-.swipe-chip[aria-pressed='true'] { background:#fbe1c9; border-color:#efa875; color:#753e29; }
-.swipe-progress { font-size:.81rem; color:var(--deck-muted); font-variant-numeric:tabular-nums; }
-.swipe-stage { position:relative; height:clamp(18rem, 48svh, 31rem); isolation:isolate; margin-bottom:.9rem; }
-.swipe-stack,.swipe-card { position:absolute; inset:0; border-radius:23px; overflow:hidden; }
-.swipe-stack { background:#e7d4bf; z-index:-1; transform:translateY(7px) scale(.955); }
-.swipe-stack img { width:100%; height:100%; object-fit:cover; display:block; filter:brightness(.82); }
-.swipe-card { background:#e5d7c7; box-shadow:0 12px 26px #603e2329; user-select:none; cursor:grab; touch-action:pan-y; }
-.swipe-card[data-dragging='true'] { cursor:grabbing; transition:none; }
-.swipe-card[data-exit] { transition:transform .24s ease,opacity .24s ease; opacity:.15; pointer-events:none; }
-.swipe-card[data-exit='filter'] { opacity:0; transform:translateX(-13%) scale(.98); }
-.swipe-card[data-returning='true'] { transition:transform .18s ease; }
-.swipe-hit { position:absolute; inset:0; display:block; border:0; background:transparent; padding:0; width:100%; border-radius:inherit; color:inherit; }
-.swipe-hit:focus-visible { outline:3px solid var(--deck-apricot); outline-offset:-4px; }
-.swipe-portrait { width:100%; height:100%; display:block; object-fit:cover; pointer-events:none; }
-.swipe-cover { position:absolute; inset:0; display:grid; place-items:center; background:linear-gradient(145deg,#f6e5d0,#e7c2a4); font-size:.94rem; color:#694b35; pointer-events:none; }
-.swipe-cover.swipe-image-ready { display:none; }
-.swipe-shade { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,#37271677 0%,transparent 30%,transparent 49%,#26180fd9 100%); }
-.swipe-status { position:absolute; top:.95rem; left:.96rem; pointer-events:none; background:#fffbf3; color:#604536; border-radius:999px; padding:.38rem .67rem; font-size:.76rem; font-weight:800; }
-.swipe-copy { position:absolute; inset:auto 1rem 1.15rem; pointer-events:none; color:white; display:grid; gap:.2rem; }
-.swipe-copy h2 { line-height:1.05; overflow-wrap:anywhere; font-family:'Noto Serif TC','Songti TC','PMingLiU',Georgia,serif; font-size:clamp(2rem,9vw,2.8rem); }
-.swipe-copy p { font-size:.9rem; font-weight:650; overflow-wrap:anywhere; }
-.swipe-copy .swipe-place { font-size:.82rem; font-weight:500; color:#fff4e8; }
-.swipe-reaction { position:absolute; top:24%; right:1.05rem; transform:rotate(12deg); border:3px solid #fff6e9; color:#fff6e9; background:#8a4b2bd9; padding:.3rem .65rem; border-radius:10px; font-weight:850; font-size:1.3rem; opacity:0; pointer-events:none; }
-.swipe-reaction[data-side='left'] { right:auto; left:1.05rem; transform:rotate(-12deg); background:#3d3430dd; }
-.swipe-actions { display:grid; grid-template-columns:1fr 1.14fr 1fr; gap:.4rem; align-items:stretch; text-align:center; }
-.swipe-action { display:grid; justify-items:center; align-content:center; gap:.15rem; min-height:61px; border:1px solid var(--deck-border); border-radius:16px; background:var(--deck-paper); color:var(--deck-ink); font-size:.83rem!important; font-weight:750!important; padding:.35rem .28rem; }
-.swipe-action strong { font-size:1.18rem; font-family:system-ui,sans-serif; line-height:1; }
-.swipe-action.swipe-cta { background:#f4a261; border-color:#e99a59; color:#4b2d1d; }
-.swipe-action.swipe-saved { background:#fae3d0; color:#873b39; }
-.swipe-action[aria-disabled='true'] { cursor:default; opacity:.66; }
-.swipe-extra { display:flex; gap:.4rem; margin-top:.4rem; }
-.swipe-extra button { flex:1; min-height:44px; padding:.35rem .5rem; border-radius:13px; border:1px solid var(--deck-border); background:var(--deck-paper); color:var(--deck-ink); font-size:.83rem; font-weight:740; }
-.swipe-extra button.swipe-apply { border-color:#e99a59; background:#fff0dc; color:#743e29; }
-.swipe-extra button[aria-disabled='true'] { cursor:default; opacity:.66; }
-.swipe-hint { margin-top:.55rem!important; text-align:center; font-size:.8rem; color:var(--deck-muted); }
-.swipe-empty { display:grid; place-content:center; gap:.7rem; text-align:center; min-height:16rem; padding:1.4rem; border-radius:22px; border:1px solid var(--deck-border); background:var(--deck-paper); }
-.swipe-empty h2 { font-size:1.25rem; }
-.swipe-empty p { color:var(--deck-muted); }
-.swipe-empty .swipe-chip { justify-self:center; }
-.swipe-visually-hidden { position:absolute; height:1px; width:1px; overflow:hidden; clip-path:inset(50%); }
-@media(max-width:350px){.swipe-chip {padding-inline:.55rem}.swipe-progress{font-size:.76rem}}
-@media(prefers-reduced-motion:reduce){.swipe-card[data-exit],.swipe-card[data-returning='true']{transition:none}}
+.swipe-screen {
+  --deck-ink: #4a3b32;
+  --deck-muted: #766255;
+  --deck-apricot: #f4a261;
+  --deck-border: rgba(224, 126, 56, 0.2);
+  --deck-paper: rgba(255, 255, 255, 0.88);
+  color: var(--deck-ink);
+  padding: .1rem 0 1.2rem;
+  overflow-x: clip;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.swipe-screen [hidden] { display: none !important; }
+.swipe-screen h1, .swipe-screen h2, .swipe-screen p { margin: 0; }
+.swipe-screen button { font: inherit; cursor: pointer; }
+
+.swipe-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .85rem;
+}
+.swipe-kicker {
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: #c66322;
+  margin-bottom: 3px !important;
+}
+.swipe-heading h1 {
+  font-family: var(--app-display, 'Noto Serif TC', Georgia, serif);
+  font-size: clamp(1.75rem, 6.2vw, 2.15rem);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+.swipe-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.swipe-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: .25rem .5rem;
+  background: transparent;
+  color: #9c421f;
+  border: 0;
+  border-radius: 10px;
+  font-size: .84rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background-color 160ms ease, opacity 140ms ease;
+}
+.swipe-pill-btn svg { width: 15px; height: 15px; color: #9c421f; flex-shrink: 0; }
+.swipe-pill-btn:hover { background: rgba(156, 66, 31, 0.08); }
+.swipe-pill-btn:active { opacity: .76; }
+
+.swipe-search { display: block; margin-bottom: .8rem; }
+.swipe-search input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--deck-border);
+  padding: .55rem .95rem;
+  border-radius: 16px;
+  background: #fffdf9;
+  color: var(--deck-ink);
+  font: inherit;
+  box-shadow: 0 4px 14px rgba(112, 78, 55, 0.05);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.swipe-search input:focus {
+  outline: none;
+  border-color: #d88d55;
+  box-shadow: 0 0 0 3px rgba(244, 162, 97, .28);
+}
+.swipe-centre { display:flex; align-items:center; gap:.4rem .8rem; flex-wrap:wrap; margin-bottom:.6rem; font-size:.88rem; }
+.swipe-centre-name { flex:1 1 10rem; font-weight:750; }
+.swipe-centre select { font:inherit; border:1px solid var(--deck-border); border-radius:8px; padding:7px; background:#fffdf9; color:inherit; }
+.swipe-centre a { color:#9c421f; padding:10px 0; }
+
+.swipe-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem .45rem;
+  margin-bottom: .95rem;
+}
+.swipe-filters {
+  display: flex;
+  gap: .15rem;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(138, 102, 76, 0.18);
+}
+.swipe-chip {
+  min-height: 42px;
+  border-radius: 0;
+  padding: .3rem .68rem;
+  border: 0;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--deck-muted);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .84rem !important;
+  font-weight: 700 !important;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.swipe-chip.is-icon {
+  min-width: 42px;
+  padding: .3rem .52rem;
+}
+.swipe-chip svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.swipe-chip:hover { color: var(--deck-ink); }
+.swipe-chip[aria-pressed='true'] {
+  background: transparent;
+  border-bottom-color: #c8581d;
+  color: #9c421f;
+  box-shadow: none;
+}
+.swipe-progress {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--deck-muted);
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+}
+
+/* Figma Make Pet Card Stack (Top Photo + White-Cream Details Panel) */
+.swipe-stage {
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 1.15rem;
+  padding-bottom: 10px;
+}
+.swipe-stack {
+  position: absolute;
+  inset: 8px 12px 0;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #edd7c0;
+  border: 1px solid rgba(224, 126, 56, 0.18);
+  z-index: -1;
+  transform: translateY(6px) scale(.965);
+  opacity: .72;
+  box-shadow: 0 12px 26px -12px rgba(74, 43, 24, .18);
+}
+.swipe-stack img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: blur(2px) brightness(.9);
+}
+
+.swipe-card {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #fffdf9;
+  border: 1px solid rgba(224, 126, 56, 0.22);
+  box-shadow: 0 18px 40px -14px rgba(92, 58, 36, .24);
+  user-select: none;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.swipe-card[data-dragging='true'] { cursor: grabbing; transition: none; }
+.swipe-card[data-exit] {
+  transition: transform .24s cubic-bezier(0.16, 1, 0.3, 1), opacity .22s ease;
+  opacity: .12;
+  pointer-events: none;
+}
+.swipe-card[data-exit='filter'] {
+  opacity: 0;
+  transform: translateX(-12%) scale(.98);
+}
+.swipe-card[data-returning='true'] {
+  transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.swipe-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  border-radius: inherit;
+  color: inherit;
+}
+.swipe-hit:focus-visible { outline: 3px solid var(--deck-apricot); outline-offset: -4px; }
+
+.pet-photo {
+  position: relative;
+  height: clamp(178px, 22svh, 206px);
+  background: linear-gradient(145deg, #f8e2c8 0%, #eab98f 100%);
+  overflow: hidden;
+}
+.swipe-portrait {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 32%;
+  pointer-events: none;
+}
+.swipe-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(145deg, #f7e4ce, #ebc19e);
+  font-size: .88rem;
+  font-weight: 700;
+  color: #7d563d;
+  pointer-events: none;
+}
+.swipe-cover svg { width: 40px; height: 40px; opacity: .45; }
+.swipe-cover.swipe-image-ready { display: none; }
+
+.photo-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(34, 19, 10, .28) 0%, rgba(34, 19, 10, 0) 34%, rgba(34, 19, 10, 0) 68%, rgba(34, 19, 10, .46) 100%);
+}
+
+.swipe-status {
+  position: absolute;
+  top: .9rem;
+  left: .9rem;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(255, 252, 246, .92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #6b3b20;
+  border-radius: 12px;
+  padding: .34rem .72rem;
+  font-size: .75rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(38, 20, 10, .14);
+}
+
+.pet-share-btn {
+  position: absolute;
+  top: .85rem;
+  right: .85rem;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 0 .78rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .45);
+  background: rgba(42, 26, 16, .58);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fffaf3;
+  font-size: .78rem;
+  font-weight: 700;
+  transition: background-color 150ms ease, transform 140ms ease;
+}
+.pet-share-btn svg { width: 14px; height: 14px; }
+.pet-share-btn:hover { background: rgba(42, 26, 16, .78); }
+.pet-share-btn:active { transform: scale(.95); }
+
+.snapshot-badge {
+  position: absolute;
+  bottom: .75rem;
+  right: .85rem;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(36, 22, 14, .66);
+  backdrop-filter: blur(6px);
+  color: #fffaf2;
+  border-radius: 10px;
+  padding: .26rem .6rem;
+  font-size: .72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pet-details {
+  padding: 14px 16px 15px;
+  display: grid;
+  gap: 6px;
+  background: #fffdf9;
+  pointer-events: none;
+}
+.pet-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pet-title-main { min-width: 0; }
+.pet-title-main h2 {
+  font-family: var(--app-display, 'Noto Serif TC', Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1.16;
+  color: var(--deck-ink);
+  overflow-wrap: anywhere;
+}
+.pet-meta-line {
+  margin-top: 5px !important;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--deck-muted);
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.pet-species-icon {
+  width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pet-species-icon.is-cat { color: #cf641f; }
+.pet-species-icon.is-dog { color: #cb4634; }
+.pet-species-icon svg { width: 17px; height: 17px; display: block; }
+
+.sex-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.sex-male { background: #e8f2fc; color: #256399; }
+.sex-female { background: #fceaf0; color: #b84268; }
+
+.pet-org-line {
+  font-size: .8rem;
+  font-weight: 600;
+  color: #9c421f;
+  line-height: 1.4;
+}
+
+.pet-excerpt {
+  font-size: .82rem;
+  line-height: 1.5;
+  color: var(--deck-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pet-card-foot {
+  margin-top: 2px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(224, 126, 56, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: .76rem;
+  font-weight: 700;
+  color: #b45622;
+}
+
+.swipe-reaction {
+  position: absolute;
+  top: 16%;
+  right: 1.1rem;
+  z-index: 3;
+  transform: rotate(11deg);
+  border: 3px solid #fff6e9;
+  color: #fff6e9;
+  background: rgba(184, 72, 30, .9);
+  padding: .32rem .75rem;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 1.2rem;
+  opacity: 0;
+  pointer-events: none;
+  letter-spacing: .06em;
+}
+.swipe-reaction[data-side='left'] {
+  right: auto;
+  left: 1.1rem;
+  transform: rotate(-11deg);
+  background: rgba(66, 48, 38, .9);
+}
+
+/* Figma Make 3 Circular Tactile Swipe Actions */
+.swipe-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.35rem;
+  margin-top: .15rem;
+}
+.swipe-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--deck-ink);
+  padding: 2px 6px;
+  min-width: 68px;
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease;
+}
+.swipe-action:active:not([aria-disabled='true']) { transform: scale(.93); }
+.swipe-action[aria-disabled='true'] { cursor: default; opacity: .55; }
+
+.swipe-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(224, 126, 56, 0.22);
+  background: #fffdf9;
+  box-shadow: 0 10px 22px -8px rgba(92, 58, 36, .18);
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1;
+  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+.swipe-circle svg { width: 24px; height: 24px; }
+.swipe-action:hover:not([aria-disabled='true']) .swipe-circle {
+  transform: translateY(-2px);
+}
+.swipe-action small {
+  font-size: .76rem;
+  font-weight: 700;
+  color: var(--deck-muted);
+  white-space: nowrap;
+}
+
+.swipe-skip .swipe-circle {
+  color: #6f5b4e;
+}
+.swipe-skip:hover:not([aria-disabled='true']) .swipe-circle {
+  background: #f7efe6;
+}
+
+.swipe-save .swipe-circle {
+  color: #c86a18;
+  background: #fffaf1;
+}
+.swipe-save.swipe-saved .swipe-circle {
+  background: #fde6be;
+  border-color: #e6a84c;
+  color: #a94f09;
+}
+.swipe-save.swipe-saved .swipe-circle svg {
+  fill: currentColor;
+}
+
+.swipe-cta .swipe-circle {
+  width: 60px;
+  height: 60px;
+  border: 0;
+  background: linear-gradient(135deg, #e27832 0%, #c8581d 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 26px -6px rgba(200, 88, 29, .45);
+}
+.swipe-cta .swipe-circle svg {
+  fill: none;
+}
+.swipe-cta small {
+  color: #9c421f;
+  font-weight: 800;
+}
+
+.swipe-area-wrap {
+  position: relative;
+}
+.swipe-undo-toast {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  border-radius: 16px;
+  background: rgba(54, 34, 24, 0.94);
+  color: #fff8ef;
+  box-shadow: 0 10px 26px -8px rgba(34, 20, 12, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: .84rem;
+  font-weight: 600;
+}
+.swipe-undo-toast[hidden] {
+  display: none !important;
+}
+.swipe-undo-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.swipe-undo-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 11px;
+  background: #f4a261;
+  color: #361e10;
+  font-size: .82rem;
+  font-weight: 800;
+  transition: background-color 150ms ease, transform 140ms ease;
+}
+.swipe-undo-btn:hover {
+  background: #f7b37b;
+}
+.swipe-undo-btn:active {
+  transform: scale(0.96);
+}
+.swipe-undo-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.swipe-extra {
+  display: flex;
+  justify-content: center;
+  margin-top: .35rem;
+}
+.swipe-apply-bar {
+  min-height: 44px;
+  padding: .35rem .9rem;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: #9c421f;
+  font-size: .88rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(156, 66, 31, 0.38);
+  transition: background-color 160ms ease, opacity 140ms ease;
+}
+.swipe-apply-bar:hover:not([aria-disabled='true']) { background: rgba(156, 66, 31, 0.07); }
+.swipe-apply-bar:active:not([aria-disabled='true']) { opacity: .75; }
+.swipe-apply-bar[aria-disabled='true'] { cursor: default; opacity: .5; }
+
+.swipe-hint {
+  margin-top: .65rem !important;
+  text-align: center;
+  font-size: .76rem;
+  color: var(--deck-muted);
+}
+
+.swipe-empty {
+  display: grid;
+  place-content: center;
+  gap: .75rem;
+  text-align: center;
+  min-height: 18rem;
+  padding: 1.8rem;
+  border-radius: 28px;
+  border: 1px solid var(--deck-border);
+  background: var(--deck-paper);
+  box-shadow: 0 8px 24px rgba(112, 78, 55, .07);
+}
+.swipe-empty h2 {
+  font-family: var(--app-display, 'Noto Serif TC', Georgia, serif);
+  font-size: 1.3rem;
+}
+.swipe-empty p {
+  color: var(--deck-muted);
+  font-size: .9rem;
+  line-height: 1.55;
+}
+.swipe-empty .swipe-chip {
+  justify-self: center;
+  background: #ffecd7;
+  border-color: #efcca9;
+  color: #7d3819;
+  padding: .5rem 1.2rem;
+}
+.swipe-visually-hidden {
+  position: absolute;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 350px) {
+  .swipe-chip { padding-inline: .6rem; }
+  .swipe-actions { gap: .9rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card[data-exit], .swipe-card[data-returning='true'] { transition: none; }
+}
 `;
 
 function el(tag, className = '', value) {
@@ -73,11 +669,23 @@ function button(label, className, onClick) {
   return node;
 }
 
-function action(symbol, label, className, onClick) {
+function iconPill(svgHtml, text, className, onClick) {
+  const node = button('', className, onClick);
+  const iconWrap = el('span');
+  iconWrap.innerHTML = svgHtml;
+  const svg = iconWrap.firstElementChild;
+  if (svg) node.append(svg);
+  node.append(el('span', '', text));
+  return node;
+}
+
+function circleAction(innerSvgOrText, label, className, onClick, isSvg = false) {
   const node = button('', `swipe-action ${className}`.trim(), onClick);
-  const icon = el('strong', '', symbol);
-  icon.setAttribute('aria-hidden', 'true');
-  node.append(icon, el('span', '', label));
+  const circle = el('span', 'swipe-circle');
+  circle.setAttribute('aria-hidden', 'true');
+  if (isSvg) circle.innerHTML = innerSvgOrText;
+  else circle.textContent = innerSvgOrText;
+  node.append(circle, el('small', '', label));
   return node;
 }
 
@@ -91,60 +699,120 @@ function safePhoto(path) {
   }
 }
 
-export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuide, onShare, onApply}) {
+export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGuide, onShare, onApply, initialRoute = {} }) {
   const scope = el('section', 'swipe-screen');
   scope.setAttribute('aria-label', '滑動探索領養');
   const css = el('style', '', style);
-  const heading = el('div', 'swipe-heading');
+
+  const heading = el('header', 'swipe-heading');
+  const titleBlock = el('div');
+  titleBlock.append(el('h1', '', '探索'));
+
   const searchLabel = el('label', 'swipe-search');
   const search = document.createElement('input');
+  const centreBar = el('div', 'swipe-centre');
+  const centreLabel = el('strong', 'swipe-centre-name', '所選領養中心');
+  const ageFilter = el('select');
+  ageFilter.setAttribute('aria-label', '按年齡篩選中心檔案');
+  for (const [value, label] of [['', '所有年齡'], ['young', '幼年'], ['adult', '成年'], ['senior', '高齡'], ['group', '成對／多隻'], ['unknown', '年齡未明或跨組']]) {
+    ageFilter.add(new Option(label, value));
+  }
+  const clearCentre = el('a', '', '移除中心篩選');
+  clearCentre.href = '#discover';
+  centreBar.append(centreLabel, ageFilter, clearCentre);
   const filterBar = el('div', 'swipe-filterbar');
   const filters = el('div', 'swipe-filters');
   const progress = el('span', 'swipe-progress');
+  const areaWrap = el('div', 'swipe-area-wrap');
   const area = el('div');
+  const undoToast = el('div', 'swipe-undo-toast');
+  undoToast.setAttribute('role', 'status');
+  undoToast.hidden = true;
+  const undoText = el('span', 'swipe-undo-text', '');
+  const undoBtn = iconPill(ICONS.undo, '復原', 'swipe-undo-btn', () => undoSkip());
+  undoToast.append(undoText, undoBtn);
+  areaWrap.append(area, undoToast);
+
   const actions = el('div', 'swipe-actions');
   const extra = el('div', 'swipe-extra');
-  const hint = el('p', 'swipe-hint', '左滑略過，右滑收藏。點相片可看完整檔案。');
   const announced = el('div', 'swipe-visually-hidden');
+
   announced.setAttribute('aria-live', 'polite');
   progress.setAttribute('aria-live', 'polite');
   filters.setAttribute('role', 'group');
   filters.setAttribute('aria-label', '按物種篩選');
+
   search.type = 'search';
   search.maxLength = 100;
-  search.placeholder = '按動物名字搜尋';
+  search.placeholder = '搜尋名字、機構或地區';
   search.autocomplete = 'off';
-  searchLabel.append(el('span', 'swipe-visually-hidden', '動物名字'), search);
+  searchLabel.append(el('span', 'swipe-visually-hidden', search.placeholder), search);
   searchLabel.hidden = true;
-  const searchToggle = button('搜尋', 'swipe-search-toggle', () => {
+
+  const searchToggle = iconPill(ICONS.search, '搜尋', 'swipe-pill-btn', () => {
     searchLabel.hidden = !searchLabel.hidden;
     searchToggle.setAttribute('aria-expanded', String(!searchLabel.hidden));
     if (!searchLabel.hidden) search.focus();
   });
   searchToggle.setAttribute('aria-expanded', 'false');
+
   const headingActions = el('div', 'swipe-heading-actions');
   if (onGuide) {
-    const guide = button('流程', 'swipe-search-toggle', onGuide);
+    const guide = iconPill(ICONS.guide, '流程', 'swipe-pill-btn', onGuide);
     guide.setAttribute('aria-label', '領養流程指南');
     headingActions.append(guide);
   }
   headingActions.append(searchToggle);
-  heading.append(el('h1', '', '滑動探索'), headingActions);
+  heading.append(titleBlock, headingActions);
+
   filterBar.append(filters, progress);
-  scope.append(heading, searchLabel, filterBar, area, actions, extra, hint, announced);
+  scope.append(heading, centreBar, searchLabel, filterBar, areaWrap, actions, extra, announced);
   root.replaceChildren(css, scope);
 
   let species = '', query = '', currentPage = 0, total = 0, nextIndex = 0;
-  let items = [], busy = false, disposed = false, requestId = 0, error = null;
-  let animating = false, saving = null, searchTimer, timer;
+  let items = [], skippedStack = [], busy = false, disposed = false, requestId = 0, error = null;
+  let animating = false, saving = null, searchTimer, timer, undoTimer;
+  let routeCentre = '', routeSpecies = '';
+  let plainSettings = { species: '', query: '', searchOpen: false };
+
+  function hideUndoToast() {
+    clearTimeout(undoTimer);
+    undoToast.hidden = true;
+  }
+
+  function showUndoToast(item) {
+    clearTimeout(undoTimer);
+    undoText.textContent = `已略過 ${item.name}`;
+    undoBtn.setAttribute('aria-label', `復原已略過的 ${item.name}`);
+    undoToast.hidden = false;
+    undoTimer = setTimeout(() => {
+      undoToast.hidden = true;
+    }, 6000);
+  }
+
+  function undoSkip() {
+    if (animating || saving || !skippedStack.length) return;
+    const last = skippedStack.pop();
+    hideUndoToast();
+    nextIndex = last.index;
+    announced.textContent = `已復原 ${last.item.name}`;
+    render();
+  }
+
   const chips = new Map();
   for (const [value, label] of SPECIES) {
-    const chip = button(label, 'swipe-chip', () => {
+    const isSpeciesIcon = value === 'cat' || value === 'dog';
+    const chip = button(isSpeciesIcon ? '' : label, isSpeciesIcon ? 'swipe-chip is-icon' : 'swipe-chip', () => {
       if (species === value) return;
       species = value;
-      chips.forEach((chip, choice) => chip.setAttribute('aria-pressed', String(choice === value)));
+      chips.forEach((c, choice) => c.setAttribute('aria-pressed', String(choice === value)));
       start(true);
     });
+    if (isSpeciesIcon) {
+      chip.innerHTML = ICONS[value];
+      chip.setAttribute('aria-label', label);
+      chip.title = label;
+    }
     chip.setAttribute('aria-pressed', String(value === species));
     chips.set(value, chip);
     filters.append(chip);
@@ -159,6 +827,29 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
       start();
     }, 260);
   });
+  ageFilter.addEventListener('change', () => start());
+
+  function setRoute(route = {}, first = false) {
+    const centre = route.centreId || '';
+    const selected = ['cat', 'dog'].includes(route.species) ? route.species : '';
+    if (!first && centre === routeCentre && selected === routeSpecies) return;
+    if (centre && !routeCentre) {
+      plainSettings = { species, query: search.value.trim(), searchOpen: !searchLabel.hidden };
+    }
+    clearTimeout(searchTimer);
+    routeCentre = centre;
+    routeSpecies = selected;
+    species = selected || (centre ? '' : plainSettings.species);
+    query = centre ? '' : plainSettings.query;
+    search.value = query;
+    searchLabel.hidden = centre ? true : !plainSettings.searchOpen;
+    searchToggle.setAttribute('aria-expanded', String(!searchLabel.hidden));
+    ageFilter.value = '';
+    centreBar.hidden = !centre;
+    centreLabel.textContent = '所選領養中心';
+    chips.forEach((chip, choice) => chip.setAttribute('aria-pressed', String(choice === species)));
+    start();
+  }
 
   function start(transition = false) {
     requestId += 1;
@@ -185,6 +876,8 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
     nextIndex = 0;
     total = 0;
     items = [];
+    skippedStack = [];
+    hideUndoToast();
     animating = false;
     error = null;
     if (species === 'other') render();
@@ -199,11 +892,20 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
     render();
     try {
       const requestedPage = currentPage + 1;
-      const data = await api.get('/api/listings', {species, q:query, status:'listed', page:requestedPage, page_size:PAGE_SIZE});
+      const data = await api.get('/api/listings', {
+        species,
+        centre_id: routeCentre,
+        age_key: ageFilter.value,
+        q: query,
+        status: 'listed',
+        page: requestedPage,
+        page_size: PAGE_SIZE,
+      });
       if (disposed || active !== requestId) return;
       currentPage = requestedPage;
       total = data.total;
       items.push(...data.items);
+      if (routeCentre && data.items[0]?.centre_name) centreLabel.textContent = data.items[0].centre_name;
       if (!data.items.length && nextIndex > 0) total = nextIndex;
     } catch (failure) {
       if (disposed || active !== requestId) return;
@@ -218,7 +920,13 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
 
   function depart(direction, item, card) {
     animating = true;
+    const departedIndex = nextIndex;
     announced.textContent = direction === 'right' ? `已收藏 ${item.name}` : `已略過 ${item.name}`;
+    if (direction === 'left') {
+      skippedStack.push({ index: departedIndex, item });
+    } else {
+      hideUndoToast();
+    }
     card.dataset.exit = direction;
     card.style.transform = `translateX(${direction === 'right' ? '110%' : '-110%'}) rotate(${direction === 'right' ? 14 : -14}deg)`;
     const active = requestId;
@@ -228,22 +936,26 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
       nextIndex += 1;
       if (nextIndex === items.length && nextIndex < total) load();
       else render();
+      if (direction === 'left') showUndoToast(item);
     }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
   }
 
   function returnCard(card) {
     card.dataset.returning = 'true';
     card.style.transform = '';
-    card.querySelector('.swipe-reaction').style.opacity = '0';
+    const r = card.querySelector('.swipe-reaction');
+    if (r) r.style.opacity = '0';
   }
 
   async function changeSaved(item, card, advance) {
     if (animating || saving) return;
-    const active = {request: requestId, index: nextIndex};
+    const active = { request: requestId, index: nextIndex };
     const restoreSaveFocus = document.activeElement?.classList.contains('swipe-save');
     saving = active;
     returnCard(card);
-    for (const control of [...actions.children, ...extra.children]) control.setAttribute('aria-disabled', 'true');
+    for (const control of [...actions.children, ...extra.children]) {
+      control.setAttribute('aria-disabled', 'true');
+    }
     let result = null;
     try {
       result = await toggleSaved(item);
@@ -257,7 +969,7 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
     else {
       if (result === false) announced.textContent = `已取消收藏 ${item.name}`;
       showActions(item, card);
-      if (restoreSaveFocus) actions.querySelector('.swipe-save')?.focus({preventScroll: true});
+      if (restoreSaveFocus) actions.querySelector('.swipe-save')?.focus({ preventScroll: true });
     }
   }
 
@@ -274,17 +986,44 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
 
   function showActions(item, card) {
     const saved = isSaved(item.id);
-    const save = action(saved ? '♥' : '♡', saved ? '已收藏' : '收藏', saved ? 'swipe-save swipe-saved' : 'swipe-save', () => changeSaved(item, card, !saved));
-    save.setAttribute('aria-pressed', String(saved));
-    actions.replaceChildren(action('×', '略過', '', () => move('left', card)),
-      action('i', '查看檔案', 'swipe-cta', () => { if (!animating && !saving) openProfile(item.id); }), save);
-    const selected = (handler) => () => {
-      if (animating || saving) return;
-      Promise.resolve().then(() => handler(item)).catch(() => { announced.textContent = '暫時未能開啟，請再試一次。'; });
-    };
+    const skipBtn = circleAction('×', '略過', 'swipe-skip', () => move('left', card), false);
+    skipBtn.setAttribute('aria-label', `略過 ${item.name}`);
+
+    const saveBtn = circleAction(
+      ICONS.bookmark,
+      saved ? '已收藏' : '收藏',
+      saved ? 'swipe-save swipe-saved' : 'swipe-save',
+      () => changeSaved(item, card, !saved),
+      true,
+    );
+    saveBtn.setAttribute('aria-pressed', String(saved));
+    saveBtn.setAttribute('aria-label', `${saved ? '取消收藏' : '收藏'} ${item.name}`);
+
+    const detailBtn = circleAction(
+      ICONS.profile,
+      '查看檔案',
+      'swipe-cta',
+      () => {
+        if (!animating && !saving) openProfile(item.id);
+      },
+      true,
+    );
+    detailBtn.setAttribute('aria-label', `查看 ${item.name} 的完整檔案`);
+
+    actions.replaceChildren(skipBtn, saveBtn, detailBtn);
+
     const controls = [];
-    if (onShare) controls.push(button('分享海報', '', selected(onShare)));
-    if (onApply && item.status === 'listed') controls.push(button('申請領養', 'swipe-apply', selected(onApply)));
+    if (onApply && item.status === 'listed') {
+      const applyBtn = button('申請領養 ›', 'swipe-apply-bar', () => {
+        if (animating || saving) return;
+        Promise.resolve()
+          .then(() => onApply(item))
+          .catch(() => {
+            announced.textContent = '暫時未能開啟，請再試一次。';
+          });
+      });
+      controls.push(applyBtn);
+    }
     extra.replaceChildren(...controls);
     extra.hidden = !controls.length;
   }
@@ -292,30 +1031,85 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
   function cardFor(item) {
     const deck = el('div', 'swipe-stage');
     const card = el('article', 'swipe-card');
-    const cover = el('div', 'swipe-cover', '暫無機構相片');
-    const photo = safePhoto(item.photo_url);
+
+    let ignoredClick = false;
     const hit = button('', 'swipe-hit', event => {
-      if (animating || saving || event.detail && ignoredClick) return;
+      if (animating || saving || (event.detail && ignoredClick)) return;
       openProfile(item.id);
     });
-    hit.setAttribute('aria-label', `查看 ${item.name} 的檔案`);
+    hit.setAttribute('aria-label', `查看 ${item.name} 的完整檔案`);
+
+    const photoBox = el('div', 'pet-photo');
+    const cover = el('div', 'swipe-cover');
+    const pawHolder = el('span');
+    pawHolder.innerHTML = ICONS.paw;
+    cover.append(pawHolder, el('span', '', '暫無機構相片'));
+
+    const photo = safePhoto(item.photo_url);
     if (photo) {
       const image = el('img', 'swipe-portrait');
-      image.alt = '';
+      image.alt = `${item.name} 的待領養相片`;
       image.draggable = false;
-      image.addEventListener('load', () => cover.classList.add('swipe-image-ready'), {once:true});
-      image.addEventListener('error', () => image.remove(), {once:true});
+      image.referrerPolicy = 'no-referrer';
+      image.addEventListener('load', () => cover.classList.add('swipe-image-ready'), { once: true });
+      image.addEventListener('error', () => image.remove(), { once: true });
       image.src = photo;
-      hit.append(image);
+      photoBox.append(image);
     }
-    const copy = el('div', 'swipe-copy');
-    const type = item.species === 'cat' ? '貓咪' : item.species === 'dog' ? '狗狗' : '';
-    copy.append(el('h2', '', item.name),
-      el('p', '', [type, item.age_label].filter(Boolean).join(' · ')),
-      el('p', 'swipe-place', [item.organisation, item.snapshot_date].filter(Boolean).join(' · ')));
+
+    photoBox.append(cover, el('div', 'photo-scrim'));
+
+    if (onShare) {
+      const shareBtn = iconPill(ICONS.share, '分享', 'pet-share-btn', event => {
+        event.stopPropagation();
+        if (animating || saving) return;
+        onShare(item);
+      });
+      shareBtn.setAttribute('aria-label', `分享 ${item.name} 的資料卡`);
+      photoBox.append(shareBtn);
+    }
+
+    const details = el('div', 'pet-details');
+    const titleRow = el('div', 'pet-title-row');
+    const titleMain = el('div', 'pet-title-main');
+    const metaText = [item.age_label, item.breed].filter(Boolean).join(' · ');
+    titleMain.append(el('h2', '', item.name));
+    if (item.species === 'cat' || item.species === 'dog' || metaText) {
+      const metaLine = el('p', 'pet-meta-line');
+      if (item.species === 'cat' || item.species === 'dog') {
+        const iconSpan = el('span', `pet-species-icon is-${item.species}`);
+        iconSpan.innerHTML = ICONS[item.species];
+        iconSpan.setAttribute('aria-label', item.species === 'cat' ? '貓咪' : '狗狗');
+        metaLine.append(iconSpan);
+      }
+      if (metaText) metaLine.append(el('span', '', metaText));
+      titleMain.append(metaLine);
+    }
+    titleRow.append(titleMain);
+
+    if (item.sex_key === 'male' || item.sex_key === 'female') {
+      const isMale = item.sex_key === 'male';
+      const sexBadge = el('span', `sex-badge ${isMale ? 'sex-male' : 'sex-female'}`, isMale ? '♂' : '♀');
+      sexBadge.setAttribute('aria-label', isMale ? '雄性' : '雌性');
+      titleRow.append(sexBadge);
+    }
+    details.append(titleRow);
+
+    const orgLine = [item.organisation, item.centre_name].filter(Boolean);
+    const uniqueOrg = orgLine.length === 2 && orgLine[1].includes(orgLine[0]) ? [orgLine[1]] : orgLine;
+    if (uniqueOrg.length) {
+      details.append(el('p', 'pet-org-line', uniqueOrg.join(' · ')));
+    }
+
+    if (item.description) {
+      details.append(el('p', 'pet-excerpt', item.description));
+    }
+
     const reaction = el('div', 'swipe-reaction');
     reaction.setAttribute('aria-hidden', 'true');
-    card.append(cover, hit, el('div', 'swipe-shade'), el('span', 'swipe-status', item.status_label), copy, reaction);
+
+    card.append(photoBox, details, hit, reaction);
+
     const stack = el('div', 'swipe-stack');
     stack.setAttribute('aria-hidden', 'true');
     const following = safePhoto(items[nextIndex + 1]?.photo_url);
@@ -323,18 +1117,20 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
       const image = document.createElement('img');
       image.alt = '';
       image.decoding = 'async';
-      image.addEventListener('error', () => image.remove(), {once:true});
+      image.referrerPolicy = 'no-referrer';
+      image.addEventListener('error', () => image.remove(), { once: true });
       image.src = following;
       stack.append(image);
     }
     deck.append(stack, card);
 
-    let gesture = null, ignoredClick = false;
+    let gesture = null;
     card.addEventListener('pointerdown', event => {
       if (event.button !== 0 || !event.isPrimary || animating || saving) return;
+      if (event.target instanceof Element && event.target.closest('.pet-share-btn')) return;
       ignoredClick = false;
       card.dataset.returning = 'false';
-      gesture = { id:event.pointerId, x:event.clientX, y:event.clientY, active:false };
+      gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, active: false };
     });
     card.addEventListener('pointermove', event => {
       if (!gesture || event.pointerId !== gesture.id) return;
@@ -347,7 +1143,7 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
         card.dataset.dragging = 'true';
         card.setPointerCapture(event.pointerId);
       }
-      card.style.transform = `translate(${x}px, ${y * .16}px) rotate(${Math.max(-16,Math.min(16,x / 13))}deg)`;
+      card.style.transform = `translate(${x}px, ${y * 0.16}px) rotate(${Math.max(-16, Math.min(16, x / 13))}deg)`;
       reaction.textContent = x < 0 ? '略過' : '收藏';
       reaction.dataset.side = x < 0 ? 'left' : 'right';
       reaction.style.opacity = String(Math.min(1, Math.abs(x) / 94));
@@ -364,18 +1160,22 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
     };
     card.addEventListener('pointerup', event => end(event, false));
     card.addEventListener('pointercancel', event => end(event, true));
-    card.addEventListener('pointerleave', () => { if (gesture && !gesture.active) gesture = null; });
-    return {card, deck};
+    card.addEventListener('pointerleave', () => {
+      if (gesture && !gesture.active) gesture = null;
+    });
+    return { card, deck };
   }
 
   function render() {
     const item = items[nextIndex];
-    progress.textContent = item ? `${number.format(nextIndex + 1)} / ${number.format(total)}` : species === 'other' ? '0 / 0' : '';
+    progress.textContent = item
+      ? `${number.format(nextIndex + 1)} / ${number.format(total)}`
+      : '';
+    progress.hidden = !progress.textContent;
     actions.hidden = !item;
-    extra.hidden = !item;
-    hint.hidden = !item;
+    extra.hidden = !item || !extra.childElementCount;
     if (item) {
-      const {card, deck} = cardFor(item);
+      const { card, deck } = cardFor(item);
       area.replaceChildren(deck);
       showActions(item, card);
       return;
@@ -388,14 +1188,21 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
     } else if (total) {
       empty.append(el('h2', '', '已瀏覽這批檔案'), button('重新瀏覽', 'swipe-chip', () => start()));
     } else if (species === 'other') {
-      empty.append(el('h2', '', '這個類別暫無領養檔案'), el('p', '', '目前的公開名錄涵蓋貓和狗，可切換類別繼續探索。'));
+      empty.append(el('h2', '', '這個類別暫無領養檔案'), el('p', '', '目前名錄收錄貓咪和狗狗。'),
+        button('查看全部', 'swipe-chip', () => chips.get('').click()));
     } else {
-      empty.append(el('h2', '', '找不到符合條件的檔案'), el('p', '', '可切換物種或修改搜尋名稱。'));
+      empty.append(el('h2', '', '找不到符合條件的檔案'), el('p', '', '可調整篩選或搜尋其他名字、機構或地區。'));
+      if (query) empty.append(button('清除搜尋', 'swipe-chip', () => {
+        search.value = query = '';
+        start();
+      }));
     }
     area.replaceChildren(empty);
   }
-  start();
+
+  setRoute(initialRoute, true);
   return {
+    setRoute,
     refreshSaved() {
       const card = area.querySelector('.swipe-card');
       if (!animating && !saving && card && items[nextIndex]) showActions(items[nextIndex], card);
@@ -404,6 +1211,7 @@ export function mountSwipe(root, {api, openProfile, isSaved, toggleSaved, onGuid
       disposed = true;
       clearTimeout(timer);
       clearTimeout(searchTimer);
+      clearTimeout(undoTimer);
     },
   };
 }

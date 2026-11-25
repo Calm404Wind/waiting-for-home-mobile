@@ -1,44 +1,255 @@
 import qrCode from './qr.js';
 
-const SPECIES = {cat: '貓', dog: '狗', other: '其他動物'};
+const SPECIES = { cat: '貓咪', dog: '狗狗', other: '其他動物' };
 const HISTORY_KEY = 'waitingForHomePetAction';
 const PREPARATION = [
-  '我已預留糧食、日用品及獸醫費用，也能應付突發開支。',
-  '我已安排出差或旅行期間的照顧。',
-  '我能接受抓咬家具、清潔和作息調整。',
-  '我已做好居家防護（例如安裝窗網），並取得家人及適用時房東的同意。',
+  '已預留日常糧食及突發醫療開支',
+  '已安排外遊或離家時的照顧',
+  '能接受清潔、抓咬與作息調整',
+  '已備妥窗網防護並獲家人／業主同意',
 ];
 
+const PAW_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="15.3" rx="5.2" ry="4.3"/><ellipse cx="5.5" cy="10" rx="2.1" ry="2.7"/><ellipse cx="18.5" cy="10" rx="2.1" ry="2.7"/><ellipse cx="9.2" cy="5.7" rx="2" ry="2.6"/><ellipse cx="14.8" cy="5.7" rx="2" ry="2.6"/></svg>`;
+
 const STYLES = `
-.pet-action-sheet { width: min(100%, 460px); max-width: none; max-height: min(90dvh, 760px); box-sizing: border-box; margin: 0 auto; inset: auto 0 0; position: fixed; border: 1px solid #ecd8c2; border-bottom: 0; border-radius: 25px 25px 0 0; background: #fffaf1; color: #422b21; padding: 0; box-shadow: 0 -12px 48px #44241830; overscroll-behavior: contain; }
-.pet-action-sheet::backdrop { background: #29181170; }
+.pet-action-sheet {
+  width: min(100%, 480px);
+  max-width: none;
+  max-height: min(92dvh, 800px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  inset: auto 0 0;
+  position: fixed;
+  border: 1px solid rgba(224, 126, 56, 0.22);
+  border-bottom: 0;
+  border-radius: 30px 30px 0 0;
+  background: #fff8ec;
+  color: #4a3b32;
+  padding: 0;
+  box-shadow: 0 -18px 56px rgba(52, 28, 16, 0.28);
+  overscroll-behavior: contain;
+}
+.pet-action-sheet::before {
+  content: '';
+  display: block;
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: #dfc3a6;
+  margin: 10px auto 0;
+}
+.pet-action-sheet::backdrop {
+  background: rgba(46, 29, 20, 0.54);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
 .pet-action-sheet * { box-sizing: border-box; }
-.pet-action-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 18px 12px; border-bottom: 1px solid #efdecb; }
-.pet-action-head h2 { margin: 0; font-size: 1.18rem; }
-.pet-action-dismiss { display: grid; place-items: center; cursor: pointer; width: 44px; height: 44px; padding: 0; border: 1px solid #edd8c2; border-radius: 50%; background: #fff5e7; color: #54392c; font-size: 1.45rem; }
-.pet-action-body { padding: 15px 18px max(20px, env(safe-area-inset-bottom, 0px)); }
-.pet-action-note { color: #734f3f; font-size: .9rem; line-height: 1.5; margin: 0 0 12px; }
-.pet-share-poster { margin: 0 0 13px; background: #fff3e2; border: 1px solid #ecd8c2; border-radius: 18px; overflow: hidden; }
-.pet-share-photo { width: 100%; height: clamp(130px, 22dvh, 196px); object-fit: cover; object-position: center 43%; display: block; background: #f4dcc4; }
-.pet-share-details { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 13px; }
+.pet-action-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 20px 12px;
+  border-bottom: 1px solid rgba(224, 126, 56, 0.16);
+}
+.pet-action-head h2 {
+  margin: 0;
+  font-family: var(--app-display, 'Noto Serif TC', Georgia, serif);
+  font-size: 1.18rem;
+  font-weight: 900;
+}
+.pet-action-dismiss {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(224, 126, 56, 0.22);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #54392c;
+  font-size: 1.35rem;
+  transition: background-color 160ms ease, transform 140ms ease;
+}
+.pet-action-dismiss:hover { background: #fde6cf; }
+.pet-action-dismiss:active { transform: scale(0.95); }
+.pet-action-body { padding: 16px 20px max(24px, env(safe-area-inset-bottom, 0px)); }
+.pet-action-note { color: #766255; font-size: .86rem; line-height: 1.55; margin: 0 0 12px; }
+
+/* Figma Make Share Poster Card */
+.pet-share-poster {
+  position: relative;
+  margin: 0 0 14px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 50% -20%, rgba(244, 162, 97, 0.34), transparent 14rem),
+    linear-gradient(165deg, #fff5e5 0%, #fde8cc 100%);
+  border: 1px solid rgba(214, 112, 42, 0.24);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px -10px rgba(92, 58, 36, 0.18);
+}
+.poster-brand-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: #b45a20;
+  margin: 0 0 12px;
+}
+.poster-brand-row svg { width: 15px; height: 15px; color: #e07630; }
+
+.pet-share-photo-wrap {
+  width: 100%;
+  height: clamp(160px, 24dvh, 215px);
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #f6dfc6, #eab98f);
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px -8px rgba(74, 43, 24, 0.2);
+}
+.pet-share-photo-wrap svg { width: 44px; height: 44px; color: rgba(156, 66, 31, 0.32); }
+.pet-share-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 36%;
+  display: block;
+}
+
+.pet-share-details {
+  margin-top: 14px;
+  padding: 13px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(224, 126, 56, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .pet-share-meta { min-width: 0; }
-.pet-share-meta h3 { margin: 0 0 5px; font-size: clamp(1.35rem, 6vw, 1.86rem); overflow-wrap: anywhere; }
-.pet-share-meta p { margin: 2px 0; font-size: .83rem; color: #795743; overflow-wrap: anywhere; }
-.pet-share-qr { display: block; width: min(33%, 121px); height: auto; flex: none; background: #fff; border-radius: 3px; image-rendering: pixelated; }
-.pet-action-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
-.pet-action-button { min-height: 44px; padding: 8px 12px; border-radius: 13px; border: 1px solid #e9c5a4; background: #fff4e5; color: #653719; text-decoration: none; font: inherit; font-size: .9rem; font-weight: 780; display: inline-flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
-.pet-action-button:hover { background: #ffead3; }
-.pet-action-button.primary { background: #f4a261; border-color: #e99c60; color: #422b21; }
-.pet-action-button.primary:hover { background: #f8b27b; }
-.pet-action-button.primary:disabled { cursor: default; background: #e9ded3; border-color: #e9ded3; color: #705a4b; }
-.pet-action-button.wide { display: flex; width: 100%; margin-top: 13px; }
-.pet-action-feedback { margin: 9px 0 0; min-height: 1.3em; color: #744b38; font-size: .88rem; }
-.pet-share-fallback { width: 100%; margin: 8px 0 0; padding: 8px; border: 1px solid #e6c9ae; border-radius: 7px; background: white; color: #422b21; font: inherit; font-size: .88rem; }
-.pet-apply-progress { display: flex; gap: 10px; align-items: center; font-size: .86rem; color: #734f3f; padding: 7px 0 10px; }
-.pet-apply-progress progress { flex: 1; min-width: 50px; accent-color: #a04423; }
-.pet-apply-check { display: flex; gap: 10px; align-items: center; padding: 11px; min-height: 49px; margin: 6px 0; border: 1px solid #ecd8c2; border-radius: 12px; background: #fff7ea; line-height: 1.35; font-size: .92rem; cursor: pointer; }
-.pet-apply-check input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: #a04423; }
-.pet-apply-check:has(input:checked) { border-color: #d9a77e; background: #ffedda; }
+.poster-kicker {
+  margin: 0 0 3px !important;
+  font-size: .7rem !important;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: #c66322 !important;
+}
+.pet-share-meta h3 {
+  margin: 0 0 4px;
+  font-family: var(--app-display, 'Noto Serif TC', Georgia, serif);
+  font-size: clamp(1.35rem, 5.5vw, 1.7rem);
+  font-weight: 900;
+  color: #4a3b32;
+  overflow-wrap: anywhere;
+}
+.pet-share-meta p {
+  margin: 2px 0;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #766255;
+  overflow-wrap: anywhere;
+}
+.pet-share-qr {
+  display: block;
+  width: min(30%, 104px);
+  height: auto;
+  flex: none;
+  background: #fff;
+  border-radius: 12px;
+  image-rendering: pixelated;
+  box-shadow: 0 4px 12px rgba(74, 43, 24, 0.1);
+}
+
+.pet-action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.pet-action-button {
+  min-height: 46px;
+  padding: 8px 15px;
+  border-radius: 16px;
+  border: 1px solid rgba(214, 126, 62, 0.25);
+  background: #ffffff;
+  color: #5c3720;
+  text-decoration: none;
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 140ms ease, box-shadow 160ms ease;
+}
+.pet-action-button:hover { background: #fff3e2; }
+.pet-action-button:active { transform: scale(0.97); }
+.pet-action-button.primary {
+  background: linear-gradient(135deg, #e27832 0%, #c8581d 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 10px 22px -6px rgba(200, 88, 29, 0.4);
+}
+.pet-action-button.primary:hover {
+  background: linear-gradient(135deg, #e8803b 0%, #cf5f23 100%);
+}
+.pet-action-button.primary:disabled {
+  cursor: default;
+  background: #e9ded3;
+  border-color: #e9ded3;
+  color: #705a4b;
+  box-shadow: none;
+}
+.pet-action-button.wide { display: flex; width: 100%; margin-top: 14px; min-height: 50px; }
+.pet-action-feedback { margin: 10px 0 0; min-height: 1.3em; color: #9c421f; font-size: .86rem; font-weight: 700; }
+.pet-share-fallback {
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(214, 126, 62, 0.28);
+  border-radius: 12px;
+  background: white;
+  color: #4a3b32;
+  font: inherit;
+  font-size: .86rem;
+}
+
+.pet-apply-progress {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: .84rem;
+  font-weight: 700;
+  color: #766255;
+  padding: 6px 0 11px;
+  font-variant-numeric: tabular-nums;
+}
+.pet-apply-progress progress { flex: 1; min-width: 50px; height: 8px; accent-color: #d66a24; }
+.pet-apply-check {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 13px 14px;
+  min-height: 54px;
+  margin: 8px 0;
+  border: 1px solid rgba(214, 126, 62, 0.2);
+  border-radius: 18px;
+  background: #ffffff;
+  line-height: 1.44;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.pet-apply-check:hover { background: #fff8ed; }
+.pet-apply-check input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: #b8521b; }
+.pet-apply-check:has(input:checked) { border-color: #d66a24; background: #ffebd6; color: #5c2d12; }
 `;
 
 let activeSheet;
@@ -53,7 +264,7 @@ function makeElement(tag, className, text) {
 }
 
 function button(text, variant, onClick) {
-  const control = makeElement('button', `pet-action-button ${variant}`, text);
+  const control = makeElement('button', `pet-action-button ${variant}`.trim(), text);
   control.type = 'button';
   control.addEventListener('click', onClick);
   return control;
@@ -66,7 +277,9 @@ function safeUrl(value, media = false) {
     if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return null;
     if (media && (url.origin !== location.origin || !url.pathname.startsWith('/media/'))) return null;
     return url.href;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function makeSheet(title) {
@@ -81,17 +294,25 @@ function makeSheet(title) {
   let entry = `${Date.now()}-${++sheetSequence}`;
   try {
     const prior = history.state;
-    const next = {...prior, [HISTORY_KEY]: entry};
+    const next = { ...prior, [HISTORY_KEY]: entry };
     if (prior?.[HISTORY_KEY]) history.replaceState(next, '');
     else history.pushState(next, '');
-  } catch { entry = null; }
+  } catch {
+    entry = null;
+  }
   let returning = false;
   const onPopState = event => {
     if (event.state?.[HISTORY_KEY] !== entry) dialog.close();
   };
   function dismiss() {
-    if (!entry || history.state?.[HISTORY_KEY] !== entry) { dialog.close(); return; }
-    if (!returning) { returning = true; history.back(); }
+    if (!entry || history.state?.[HISTORY_KEY] !== entry) {
+      dialog.close();
+      return;
+    }
+    if (!returning) {
+      returning = true;
+      history.back();
+    }
   }
   const heading = makeElement('h2', '', title);
   heading.id = 'pet-action-title';
@@ -106,18 +327,25 @@ function makeSheet(title) {
   header.append(heading, close);
   dialog.append(header, body);
   if (entry) window.addEventListener('popstate', onPopState);
-  dialog.addEventListener('cancel', event => { event.preventDefault(); dismiss(); });
-  dialog.addEventListener('close', () => {
-    window.removeEventListener('popstate', onPopState);
-    dialog.remove();
-    if (activeSheet === dialog) {
-      activeSheet = null;
-      if (previousFocus?.isConnected) previousFocus.focus?.({preventScroll: true});
-    }
-  }, {once: true});
+  dialog.addEventListener('cancel', event => {
+    event.preventDefault();
+    dismiss();
+  });
+  dialog.addEventListener(
+    'close',
+    () => {
+      window.removeEventListener('popstate', onPopState);
+      dialog.remove();
+      if (activeSheet === dialog) {
+        activeSheet = null;
+        if (previousFocus?.isConnected) previousFocus.focus?.({ preventScroll: true });
+      }
+    },
+    { once: true },
+  );
   document.body.append(dialog);
   activeSheet = dialog;
-  return {dialog, body, dismiss};
+  return { dialog, body, dismiss };
 }
 
 function qrCanvas(url, cellSize = 5) {
@@ -133,10 +361,12 @@ function qrCanvas(url, cellSize = 5) {
   const context = canvas.getContext('2d');
   context.fillStyle = '#fff';
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = '#18201c';
+  context.fillStyle = '#4a3b32';
   for (let y = 0; y < blocks; y += 1) {
     for (let x = 0; x < blocks; x += 1) {
-      if (matrix.isDark(y, x)) context.fillRect((x + 4) * cellSize, (y + 4) * cellSize, cellSize, cellSize);
+      if (matrix.isDark(y, x)) {
+        context.fillRect((x + 4) * cellSize, (y + 4) * cellSize, cellSize, cellSize);
+      }
     }
   }
   return canvas;
@@ -161,32 +391,41 @@ function drawPhoto(context, photo, width, height) {
   const ratio = Math.max(width / photo.naturalWidth, height / photo.naturalHeight);
   const cropWidth = width / ratio;
   const cropHeight = height / ratio;
-  context.drawImage(photo, (photo.naturalWidth - cropWidth) / 2, (photo.naturalHeight - cropHeight) / 2,
-    cropWidth, cropHeight, 0, 0, width, height);
+  context.drawImage(
+    photo,
+    (photo.naturalWidth - cropWidth) / 2,
+    (photo.naturalHeight - cropHeight) / 2,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    width,
+    height,
+  );
 }
 
-async function savePoster({name, facts, organisation, photo, code}, feedback) {
+async function savePoster({ name, facts, organisation, photo, code }, feedback) {
   try {
     if (photo && !photo.complete) await photo.decode().catch(() => {});
     const canvas = document.createElement('canvas');
     canvas.width = 900;
-    const photoHeight = photo?.complete && photo.naturalWidth ? 530 : 0;
-    canvas.height = photoHeight + 324;
+    const photoHeight = photo?.complete && photo.naturalWidth ? 540 : 0;
+    canvas.height = photoHeight + 330;
     const context = canvas.getContext('2d');
-    context.fillStyle = '#fff3e2';
+    context.fillStyle = '#fff3e0';
     context.fillRect(0, 0, canvas.width, canvas.height);
     if (photoHeight) drawPhoto(context, photo, canvas.width, photoHeight);
-    context.drawImage(code, 624, photoHeight + 37, 244, 244);
-    context.fillStyle = '#8a411f';
-    context.font = '600 28px sans-serif';
-    context.fillText('等一個家', 32, photoHeight + 61, 560);
-    context.fillStyle = '#422b21';
-    context.font = '700 54px sans-serif';
-    context.fillText(name, 32, photoHeight + 134, 560);
-    context.fillStyle = '#795743';
-    context.font = '34px sans-serif';
-    if (facts) context.fillText(facts, 32, photoHeight + 197, 560);
-    if (organisation) context.fillText(organisation, 32, photoHeight + 250, 560);
+    context.drawImage(code, 624, photoHeight + 40, 240, 240);
+    context.fillStyle = '#c8581d';
+    context.font = '700 26px sans-serif';
+    context.fillText('等一個家 · 動物專屬資料卡', 36, photoHeight + 66, 560);
+    context.fillStyle = '#4a3b32';
+    context.font = '900 54px sans-serif';
+    context.fillText(name, 36, photoHeight + 140, 560);
+    context.fillStyle = '#766255';
+    context.font = '600 32px sans-serif';
+    if (facts) context.fillText(facts, 36, photoHeight + 202, 560);
+    if (organisation) context.fillText(organisation, 36, photoHeight + 254, 560);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('poster export');
     const url = URL.createObjectURL(blob);
@@ -198,7 +437,7 @@ async function savePoster({name, facts, organisation, photo, code}, feedback) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     feedback.textContent = '已開始下載海報。';
   } catch {
-    feedback.textContent = '暫時無法儲存海報。你仍可複製檔案連結。';
+    feedback.textContent = '暫時無法儲存海報，你仍可複製下方檔案連結。';
   }
 }
 
@@ -207,28 +446,50 @@ export function openShare(item) {
   const demoUrl = new URL('/', location.origin);
   demoUrl.hash = `animal=${encodeURIComponent(item.id)}`;
   const name = item.name || '名稱未公佈';
-  const facts = [SPECIES[item.species], item.age_label].filter(Boolean).join(' · ');
+  const facts = [SPECIES[item.species], item.age_label, item.breed].filter(Boolean).join(' · ');
   const agency = item.organisation || '';
   const original = safeUrl(item.source_url) || safeUrl(item.official_action_url);
-  const imageUrl = safeUrl(item.photo_url, true) || (item.photos || []).map(photo => safeUrl(photo.url, true)).find(Boolean);
+  const imageUrl =
+    safeUrl(item.photo_url, true) || (item.photos || []).map(p => safeUrl(p.url, true)).find(Boolean);
   const onThisDevice = /^(?:localhost|127\.\d+\.\d+\.\d+|\[::1\])$/.test(location.hostname);
   const code = qrCanvas(onThisDevice && original ? original : demoUrl.href);
-  const {dialog, body} = makeSheet('分享這則領養檔案');
+
+  const { dialog, body } = makeSheet('分享資料卡');
   const poster = makeElement('div', 'pet-share-poster');
+
+  const brand = makeElement('p', 'poster-brand-row');
+  const pawHolder = makeElement('span');
+  pawHolder.innerHTML = PAW_SVG;
+  brand.append(pawHolder.firstElementChild, document.createTextNode('等一個家'));
+  poster.append(brand);
+
+  const photoWrap = makeElement('div', 'pet-share-photo-wrap');
+  const fallbackPaw = makeElement('span');
+  fallbackPaw.innerHTML = PAW_SVG;
+  photoWrap.append(fallbackPaw.firstElementChild);
+
   let photo;
   if (imageUrl) {
     photo = makeElement('img', 'pet-share-photo');
     photo.alt = `${name} 的機構照片`;
-    photo.addEventListener('error', () => { photo.hidden = true; }, {once: true});
+    photo.referrerPolicy = 'no-referrer';
+    photo.addEventListener('error', () => {
+      photo.hidden = true;
+    }, { once: true });
     photo.src = imageUrl;
-    poster.append(photo);
+    photoWrap.append(photo);
   }
+  poster.append(photoWrap);
+
   const details = makeElement('div', 'pet-share-details');
   const meta = makeElement('div', 'pet-share-meta');
   meta.append(makeElement('h3', '', name));
-  for (const field of [facts, agency, item.status_label]) if (field) meta.append(makeElement('p', '', field));
+  for (const field of [facts, agency]) {
+    if (field) meta.append(makeElement('p', '', field));
+  }
   details.append(meta, code);
   poster.append(details);
+
   const actions = makeElement('div', 'pet-action-buttons');
   const feedback = makeElement('p', 'pet-action-feedback');
   feedback.setAttribute('role', 'status');
@@ -236,21 +497,24 @@ export function openShare(item) {
   manual.hidden = true;
   manual.readOnly = true;
   manual.setAttribute('aria-label', '可手動複製的連結');
-  actions.append(button(onThisDevice ? '複製本機 Demo 連結' : '複製檔案連結', 'primary', () => copyUrl(demoUrl.href, feedback, manual)),
-    button('儲存海報', '', () => savePoster({name, facts, organisation: agency, photo, code}, feedback)));
-  if (original) actions.append(button('複製機構連結', '', () => copyUrl(original, feedback, manual)));
-  if (onThisDevice) {
-    body.append(makeElement('p', 'pet-action-note', original ? '海報 QR Code 開啟機構官網，可用另一部手機掃描。' : '海報 QR Code 開啟這部電腦的 Demo。'));
+
+  actions.append(
+    button('複製連結', 'primary', () => copyUrl(demoUrl.href, feedback, manual)),
+    button('下載海報', '', () => savePoster({ name, facts, organisation: agency, photo, code }, feedback)),
+  );
+  if (original) {
+    actions.append(button('官網連結', '', () => copyUrl(original, feedback, manual)));
   }
+
   body.append(poster, actions, feedback, manual);
   dialog.showModal();
   return true;
 }
 
 function showChecklist(item, official) {
-  const {dialog, body, dismiss} = makeSheet('申請領養前，請先確認');
+  const { dialog, body, dismiss } = makeSheet('申請前確認');
   const name = item.name || '這隻動物';
-  body.append(makeElement('p', 'pet-action-note', `想了解 ${name} 的領養安排？請確認以下準備，再前往機構。`));
+  body.append(makeElement('p', 'pet-action-note', `前往官網了解 ${name} 前，請確認：`));
   const progressWrap = makeElement('div', 'pet-apply-progress');
   const progress = makeElement('progress');
   progress.max = PREPARATION.length;
@@ -259,6 +523,7 @@ function showChecklist(item, official) {
   count.setAttribute('aria-live', 'polite');
   progressWrap.append(progress, count);
   body.append(progressWrap);
+
   const choices = PREPARATION.map(text => {
     const label = makeElement('label', 'pet-apply-check');
     const input = document.createElement('input');
@@ -267,7 +532,8 @@ function showChecklist(item, official) {
     body.append(label);
     return input;
   });
-  const confirm = button('確認並前往機構', 'primary wide', () => {
+
+  const confirm = button('確認並前往機構官網 ↗', 'primary wide', () => {
     if (confirm.disabled) return;
     const out = document.createElement('a');
     out.href = official;
@@ -276,6 +542,7 @@ function showChecklist(item, official) {
     out.click();
     dismiss();
   });
+
   function update() {
     const completed = choices.filter(input => input.checked).length;
     progress.value = completed;
@@ -289,14 +556,18 @@ function showChecklist(item, official) {
   return true;
 }
 
-export async function startApplication(item, {requireUser, requireQuestionnaire} = {}) {
+export async function startApplication(item, { requireUser, requireQuestionnaire } = {}) {
   const official = safeUrl(item?.official_action_url) || safeUrl(item?.source_url);
-  if (!official || !['listed', 'foster_option'].includes(item?.status) || !requireUser || !requireQuestionnaire) return false;
+  if (!official || !['listed', 'foster_option'].includes(item?.status) || !requireUser || !requireQuestionnaire) {
+    return false;
+  }
   if (pendingApplication) return false;
   pendingApplication = true;
   try {
-    if (!await requireUser('申請領養')) return false;
-    if (!await requireQuestionnaire()) return false;
+    if (!(await requireUser('申請領養'))) return false;
+    if (!(await requireQuestionnaire())) return false;
     return showChecklist(item, official);
-  } finally { pendingApplication = false; }
+  } finally {
+    pendingApplication = false;
+  }
 }

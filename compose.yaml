@@ -17,6 +17,7 @@ services:
         condition: service_healthy
     environment:
       ADOPTION_MONGO_URI: mongodb://mongo:27017
+      ADOPTION_GOOGLE_MAPS_BROWSER_KEY: "${ADOPTION_GOOGLE_MAPS_BROWSER_KEY:-}"
     ports:
       - "127.0.0.1:${DEMO_PORT:-8047}:8047"
     volumes:

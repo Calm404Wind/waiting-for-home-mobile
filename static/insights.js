@@ -1,24 +1,141 @@
 const SVG = 'http://www.w3.org/2000/svg';
 const numberFormat = new Intl.NumberFormat('zh-HK');
 
+let googleMapsBundlePromise = null;
+let mapsAuthFailed = false;
+function loadGoogleMapsBundle(api) {
+  if (!googleMapsBundlePromise) {
+    googleMapsBundlePromise = (async () => {
+      const cfg = await api.get('/api/maps-config');
+      const key = typeof cfg?.apiKey === 'string' ? cfg.apiKey.trim() : '';
+      if (!key || mapsAuthFailed) return null;
+      if (!window.google?.maps?.importLibrary) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          const query = new URLSearchParams({ key, v: 'weekly', language: 'zh-HK', region: 'HK',
+            loading: 'async', callback: 'waitingForHomeMapsReady' });
+          window.gm_authFailure = () => {
+            mapsAuthFailed = true;
+            window.dispatchEvent(new Event('adoption-maps-unavailable'));
+            reject(new Error('Maps unavailable'));
+          };
+          window.waitingForHomeMapsReady = () => {
+            delete window.waitingForHomeMapsReady;
+            resolve();
+          };
+          script.async = true;
+          script.onerror = () => {
+            delete window.waitingForHomeMapsReady;
+            script.remove();
+            reject(new Error('Maps unavailable'));
+          };
+          script.src = 'https://maps.googleapis.com/maps/api/js?' + query;
+          document.head.append(script);
+        });
+      }
+      const [maps, markers, core] = await Promise.all(
+        ['maps', 'marker', 'core'].map(name => window.google.maps.importLibrary(name)));
+      return { Map: maps.Map, AdvancedMarkerElement: markers.AdvancedMarkerElement, LatLngBounds: core.LatLngBounds };
+    })().catch(error => {
+      googleMapsBundlePromise = null;
+      throw error;
+    });
+  }
+  return googleMapsBundlePromise;
+}
+
 const styles = `
-.mobile-insights{--mi-paper:#fffbf6;--mi-ink:#332723;--mi-muted:#706057;--mi-border:#f2decc;--mi-accent:#a94222;--mi-orange:#e9774b;--mi-warm:#fce8d6;--mi-green:#3c7767;color:var(--mi-ink);display:grid;gap:.9rem;min-width:0}
-.mobile-insights *{box-sizing:border-box}.mobile-insights :is(button,select){font:inherit;color:inherit}.mobile-insights :is(button,select,a,[tabindex]):focus-visible{outline:2px solid var(--mi-accent);outline-offset:3px}
-.mi-header h2,.mi-panel h3,.mi-centre-card h4,.mi-samples h4{margin:0;line-height:1.22}.mi-header h2{font-size:1.52rem;font-weight:850}.mi-panel h3{font-size:1.145rem;font-weight:820}.mi-header p,.mi-panel>p,.mi-note{margin:.3rem 0 0;color:var(--mi-muted);font-size:.79rem;line-height:1.55}
-.mi-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem;background:#f7eadc;padding:.265rem;border-radius:1.04rem}.mi-tab{border:0;border-radius:.79rem;min-height:44px;background:transparent;color:#59483b;font-weight:710;font-size:.8rem;cursor:pointer}.mi-tab[aria-pressed=true]{background:#fffaf3;color:#96391c;box-shadow:0 1px 4px #79543a22}
-.mi-controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.55rem}.mi-filters{display:flex;gap:.33rem}.mi-filter,.mi-select{min-height:44px;border-radius:999px;border:1px solid var(--mi-border);background:var(--mi-paper);padding:.4rem .73rem;font-size:.78rem}.mi-filter{min-width:44px;cursor:pointer}.mi-filter[aria-pressed=true]{background:#fce5d4;border-color:#eebda0;color:#8d3419;font-weight:760}.mi-select{max-width:100%;padding-inline:.7rem;cursor:pointer;min-width:0}.mi-org{flex:1 1 9rem;max-width:15rem}
-.mi-load{display:grid;gap:.65rem;justify-items:start;background:var(--mi-paper);border:1px solid var(--mi-border);border-radius:1.1rem;padding:1.05rem;color:var(--mi-muted);font-size:.86rem}.mi-content{min-width:0;display:grid;gap:.84rem}
-.mi-summary{display:grid;grid-template-columns:1.3fr 1fr;gap:.6rem}.mi-stat{display:grid;gap:.28rem;align-content:center;min-width:0;border:1px solid var(--mi-border);border-radius:1rem;background:var(--mi-paper);padding:.68rem .78rem}.mi-stat:first-child{background:#ffead8;border-color:#f6d4b7}.mi-stat strong{font-weight:870;line-height:1;color:#493123;font-size:1.34rem;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.mi-stat span{font-size:.7rem;line-height:1.3;color:var(--mi-muted);overflow-wrap:anywhere}
-.mi-panel,.mi-samples{display:grid;gap:.77rem;min-width:0;border:1px solid var(--mi-border);border-radius:1.28rem;background:var(--mi-paper);padding:clamp(.76rem,3.8vw,1.05rem)}.mi-panel>p{margin:-.43rem 0 0}.mi-map{border-radius:.93rem;overflow:hidden;background:#ebf1e8;border:1px solid #e1e8dc;min-width:0}.mi-map svg,.mi-plot svg{display:block;width:100%;height:auto}.mi-terrain{fill:#fff8e8;stroke:#aabf9e;stroke-width:.8;vector-effect:non-scaling-stroke;pointer-events:none}.mi-marker{cursor:pointer}.mi-marker .mi-marker-bubble{fill:#446f62;stroke:#fff9ed;stroke-width:2;vector-effect:non-scaling-stroke}.mi-marker.mi-empty .mi-marker-bubble{fill:#9da89a}.mi-marker[aria-pressed=true] .mi-marker-bubble{fill:#bb4a26;stroke-width:2.6}.mi-marker text{fill:white;text-anchor:middle;dominant-baseline:central;font-size:9px;font-weight:800;pointer-events:none}
-.mi-centre-select{width:100%;border-radius:.75rem}.mi-centre-card{display:grid;gap:.38rem;min-width:0;border-radius:.9rem;padding:.75rem;background:#faeee0}.mi-centre-card img{width:100%;max-height:8.25rem;object-fit:cover;border-radius:.55rem}.mi-centre-card h4,.mi-centre-card p{overflow-wrap:anywhere}.mi-centre-card p{margin:0;color:#57483a;font-size:.78rem;line-height:1.5}.mi-link-row{display:flex;flex-wrap:wrap;gap:.3rem .75rem}.mobile-insights a{font-size:.75rem;color:#913a20;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere;width:fit-content}
-.mi-centre-card[hidden]{display:none}.mi-panel .mi-map-coverage{margin:0;color:#5e4839;font-weight:750}
-.mi-age-list{display:grid;gap:.25rem}.mi-age{width:100%;display:grid;gap:.45rem;padding:.52rem;border:1px solid transparent;border-radius:.7rem;background:transparent;text-align:left;cursor:pointer}.mi-age[aria-pressed=true]{border-color:#edc4a9;background:#fff3e7}.mi-age-row{display:flex;justify-content:space-between;gap:.4rem;align-items:baseline;font-size:.78rem;line-height:1.35}.mi-age-row strong{white-space:nowrap;font-size:.82rem;font-variant-numeric:tabular-nums}.mi-age-track{height:.62rem;background:#f3e9de;border-radius:999px;overflow:hidden}.mi-age-track i{display:block;height:100%;width:var(--mi-bar);background:#d87755;border-radius:inherit}.mi-age:nth-child(2) .mi-age-track i{background:#ba5331}.mi-age:nth-child(3) .mi-age-track i{background:#e49859}.mi-age:nth-child(n+4) .mi-age-track i{background:#8b9b8b}
-.mi-plot{min-width:0;background:#fff9f1;border:1px solid #f2e4d3;border-radius:.85rem;overflow:hidden}.mi-plot text{font-size:10px;fill:#6b5a4c}.mi-gridline{stroke:#ecdecd;vector-effect:non-scaling-stroke}.mi-series{fill:none;stroke-width:2.25;vector-effect:non-scaling-stroke}.mi-active-line{stroke:#be8a70;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}.mi-plot svg{cursor:crosshair}.mi-legend{display:flex;gap:.8rem;color:#624e3e;font-size:.77rem}.mi-legend i{display:inline-block;width:.65rem;height:.65rem;border-radius:50%;margin-inline-end:.3rem}.mi-month-controls{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}.mi-month-controls .mi-select{border-radius:.75rem}.mi-month-summary{font-size:.82rem;font-weight:750;color:#6a3928}.mi-table summary{cursor:pointer;color:#784830;font-size:.79rem;min-height:44px;display:list-item;padding-top:.65rem}.mi-table table{width:100%;border-collapse:collapse;font-size:.75rem;color:#564841}.mi-table :is(td,th){text-align:left;border-top:1px solid var(--mi-border);padding:.38rem .18rem}.mi-table :is(td,th):not(:first-child){text-align:right}
-.mi-samples h4{font-size:1rem}.mi-sample-list{display:grid;gap:.43rem}.mi-profile{width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:.6rem;text-align:left;background:#fffaf3;border:1px solid var(--mi-border);border-radius:.73rem;padding:.53rem .64rem;cursor:pointer}.mi-profile div{display:grid;gap:.12rem;min-width:0;overflow-wrap:anywhere}.mi-profile strong{font-size:.82rem}.mi-profile small{font-size:.71rem;color:var(--mi-muted)}.mi-profile>span{font-size:1.12rem;color:#974221}
-.mi-callout{display:grid;gap:.38rem;padding:.76rem .85rem;background:#fff2e5;border:1px solid #f3daca;border-radius:.88rem;color:#67483c;font-size:.83rem;line-height:1.55}.mi-callout h4,.mi-callout p{margin:0}.mi-callout h4{font-size:.9rem;color:var(--mi-ink)}.mi-wait-bar:hover,.mi-wait-bar:focus-visible{background:#fff0df;border-color:#edc4a9}.mi-wait-bar[aria-pressed=true] .mi-age-track i,.mi-wait-bar:hover .mi-age-track i,.mi-wait-bar:focus-visible .mi-age-track i{background:#a64328}.mi-wait-reading{min-height:2.1rem;margin:0;color:#734424;font-size:.8rem}
-.mi-scatter .mi-axis{stroke:#cdb4a5;vector-effect:non-scaling-stroke}.mi-scatter .mi-point{cursor:pointer}.mi-scatter .mi-point:focus-visible,.mi-flow .mi-flow-node:focus-visible{outline:none;filter:drop-shadow(0 0 2px #513324)}.mi-scatter-choices{width:100%}.mi-story-card{display:grid;gap:.5rem;padding:.66rem;background:#fff3e7;border:1px solid #f1dac6;border-radius:.84rem}.mi-story-card img{width:100%;max-height:8.6rem;object-fit:cover;border-radius:.58rem}.mi-story-card h4,.mi-story-card p{margin:0}.mi-story-events{display:grid;gap:.32rem;margin:.08rem 0;padding:0;list-style:none;font-size:.76rem}.mi-story-events li{display:flex;justify-content:space-between;gap:.3rem}.mi-story-events time{font-variant-numeric:tabular-nums;white-space:nowrap}.mi-story-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(100%,31rem);max-height:85dvh;overflow:auto;padding:1.05rem max(.98rem,env(safe-area-inset-right)) max(1.05rem,env(safe-area-inset-bottom)) max(.98rem,env(safe-area-inset-left));border:1px solid #ebccb3;border-radius:1.35rem 1.35rem 0 0;background:#fffaf3;color:#3b2922;box-shadow:0 -.3rem 1.8rem #21161030}.mi-story-sheet::backdrop{background:#27181380}.mi-story-sheet header{display:flex;align-items:center;justify-content:space-between;gap:.5rem}.mi-story-sheet header h3{font-size:1.18rem;margin:0}.mi-story-sheet .mi-filter{font:inherit;background:#fff9f1;border:1px solid #edceb4;margin:.28rem 0;min-height:44px}.mi-story-sheet .mi-story-action{background:#ad4829;color:#fff8ee;width:100%;font-weight:700}
-.mi-flow .mi-flow-node{cursor:pointer}.mi-flow .mi-flow-node text{font-size:9.5px;font-weight:700;paint-order:stroke;stroke:#fffaf2;stroke-width:3px;stroke-linejoin:round}.mi-flow .mi-flow-node:focus-visible rect,.mi-flow .mi-flow-node[aria-pressed=true] rect{stroke:#a64328;stroke-width:2}.mi-flow .mi-stage-label{font-size:9px;font-weight:800;fill:#654636}.mi-flow .mi-flow-ribbon{pointer-events:none;transition:opacity .16s}.mi-flow-controls{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}.mi-flow-controls label{font-size:.8rem;font-weight:700}.mi-flow-detail,.mi-flow-range{font-size:.76rem;color:var(--mi-muted);min-height:.9rem;line-height:1.45}.mi-flow-table td:nth-child(2),.mi-flow-table th:nth-child(2){text-align:left}.mi-flow-reset[hidden]{display:none}
-@media(prefers-reduced-motion:reduce){.mi-flow .mi-flow-ribbon{transition:none}}
+.mobile-insights{--mi-paper:#fffdf8;--mi-ink:#422b21;--mi-muted:#6c5245;--mi-border:#ecd8c2;--mi-accent:#a04423;--mi-orange:#f4a261;--mi-warm:#fce8d6;--mi-green:#1f6a52;color:var(--mi-ink);display:grid;gap:.78rem;min-width:0}
+.mobile-insights *{box-sizing:border-box}:where(.mobile-insights :is(button,select)){font:inherit;color:inherit}.mobile-insights :is(button,select,a,[tabindex]):focus-visible{outline:2px solid var(--mi-accent);outline-offset:3px}
+.mi-header h2,.mi-panel h3,.mi-centre-card h4,.mi-samples h4{margin:0;line-height:1.22;font-family:var(--app-display,'Noto Serif TC',Georgia,serif)}
+.mi-header-row{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
+.mi-header h2{font-size:1.52rem;font-weight:900;letter-spacing:-.02em}
+.mi-snapshot-meta{font-size:.75rem;color:var(--mi-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mi-panel h3{font-size:1.08rem;font-weight:700}.mi-panel>p,.mi-note{margin:.25rem 0 0;color:var(--mi-muted);font-size:.8rem;line-height:1.52}
+.mi-tabs{display:flex;gap:.2rem;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;background:transparent;padding:0;border-radius:0;border-bottom:1px solid rgba(138,102,76,.18)}.mi-tabs::-webkit-scrollbar{display:none}
+.mi-tab{flex:0 0 auto;border:0;border-bottom:2.5px solid transparent;margin-bottom:-1px;border-radius:0;min-height:42px;padding:0 .68rem;background:transparent;color:#725c4e;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:color 160ms ease,border-color 160ms ease}.mi-tab:hover{color:var(--mi-ink)}.mi-tab[aria-pressed=true]{background:transparent;color:#9c421f;border-bottom-color:#c8581d;box-shadow:none}
+.mi-controls{display:flex;align-items:center;justify-content:space-between;gap:.5rem;min-width:0}
+.mi-filters{display:inline-flex;flex-shrink:0;gap:.12rem;background:transparent;padding:0;border-radius:0;border-bottom:1px solid rgba(138,102,76,.15)}
+.mi-filter,.mi-select{min-height:38px;border-radius:10px;border:1px solid rgba(138,102,76,.22);background:var(--mi-paper);padding:.3rem .72rem;font-size:.81rem;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease}
+.mi-filter{min-width:44px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:0;background:transparent;color:var(--mi-muted);cursor:pointer;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;padding:.24rem .58rem}.mi-filter svg{width:19px;height:19px;display:block}.mi-filter:hover{color:var(--mi-ink)}.mi-filter[aria-pressed=true]{background:transparent;border-bottom-color:#c8581d;color:#9c421f;box-shadow:none}
+.mi-select{max-width:100%;padding-inline:.72rem;cursor:pointer;min-width:0;text-overflow:ellipsis;box-shadow:none}
+.mi-load{display:grid;gap:.65rem;justify-items:start;background:var(--mi-paper);border:1px solid rgba(138,102,76,.15);border-radius:1.15rem;padding:1.1rem;color:var(--mi-muted);font-size:.88rem}.mi-content{min-width:0;display:grid;gap:.78rem}
+.mi-summary{display:grid;grid-template-columns:1.12fr 1fr;gap:.55rem}
+.mi-stat{display:grid;gap:.18rem;align-content:center;min-width:0;border:1px solid rgba(138,102,76,.15);border-radius:.95rem;background:var(--mi-paper);padding:.64rem .82rem;box-shadow:none}
+.mi-stat strong{font-family:var(--app-display,'Noto Serif TC',Georgia,serif);font-weight:900;line-height:1.05;color:#422b21;font-size:1.38rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.mi-stat span{font-size:.73rem;line-height:1.3;color:var(--mi-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-panel,.mi-samples{display:grid;gap:.72rem;min-width:0;border:1px solid rgba(138,102,76,.15);border-radius:1.2rem;background:var(--mi-paper);padding:clamp(.85rem,3.4vw,1.2rem);box-shadow:none}.mi-panel>p{margin:-.35rem 0 0}.mi-samples[hidden]{display:none}
+.mi-map-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;min-height:36px}
+.mi-map-head h3{margin:0;line-height:1.22;font-family:var(--app-display,'Noto Serif TC',Georgia,serif);font-size:1.08rem;font-weight:700;white-space:nowrap}
+.mi-map-reset{border:0;background:transparent;color:#9c421f;border-radius:0;min-height:36px;padding:0 .15rem;font-size:.78rem;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;white-space:nowrap}
+.mi-map-reset:hover{color:#7a2e12}
+.mi-map-reset[hidden]{display:none}
+.mi-map-stage{position:relative;border-radius:.95rem;overflow:hidden;border:1px solid rgba(138,102,76,.18);background:#e8eaed;min-width:0}
+.mi-map-canvas{width:100%;height:340px;background:#e8eaed}
+.mi-map-status{position:absolute;inset:0;display:grid;place-items:center;padding:1rem;text-align:center;font-size:.82rem;color:var(--mi-muted);background:rgba(255,253,248,.88);z-index:2}
+.mi-map-status[hidden]{display:none}
+.mi-pin{min-width:36px;min-height:36px;padding:2px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;position:relative;outline:none;pointer-events:auto;transition:opacity 160ms ease}
+.mi-map-stage.has-selection .mi-pin:not([aria-pressed=true]){opacity:.52}
+.mi-pin-core{min-width:27px;height:27px;padding:0 7px;border-radius:999px;background:var(--mi-green);color:#fffdf8;border:2px solid #ffffff;box-shadow:0 2px 8px rgba(24,20,18,.32);display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;position:relative;transition:transform 160ms cubic-bezier(.16,1,.3,1),background-color 160ms ease,box-shadow 160ms ease}
+.mi-pin-core::after{content:'';position:absolute;top:calc(100% - 1px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#ffffff}
+.mi-pin.is-empty .mi-pin-core{min-width:14px;width:14px;height:14px;padding:0;background:#64748b;font-size:0}
+.mi-pin.is-empty .mi-pin-core::after{display:none}
+.mi-pin-tag{position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%) translateY(2px);white-space:nowrap;background:rgba(40,24,16,.94);color:#fffaf2;font-size:.73rem;font-weight:600;padding:.24rem .56rem;border-radius:.48rem;box-shadow:0 4px 12px rgba(24,16,10,.26);opacity:0;pointer-events:none;transition:opacity 150ms ease,transform 150ms cubic-bezier(.16,1,.3,1)}
+.mi-pin:hover .mi-pin-core,.mi-pin:focus-visible .mi-pin-core,.mi-pin[aria-pressed=true] .mi-pin-core{background:#a04423;transform:scale(1.14);box-shadow:0 0 0 3px rgba(244,162,97,.45),0 5px 14px rgba(88,30,12,.36)}
+.mi-pin.is-empty:hover .mi-pin-core,.mi-pin.is-empty:focus-visible .mi-pin-core,.mi-pin.is-empty[aria-pressed=true] .mi-pin-core{min-width:18px;width:18px;height:18px}
+.mi-pin:hover .mi-pin-tag,.mi-pin:focus-visible .mi-pin-tag,.mi-pin[aria-pressed=true] .mi-pin-tag{opacity:1;transform:translateX(-50%) translateY(-1px)}
+.mi-plot svg{display:block;width:100%;height:auto}
+.mi-map-hint{margin:0;font-size:.75rem;color:var(--mi-muted);text-align:center}
+.mi-map-hint[hidden]{display:none}
+.mi-centre-card{display:grid;gap:.48rem;min-width:0;border-radius:.95rem;padding:.88rem .95rem;background:#fffaf3;border:1px solid rgba(138,102,76,.18);scroll-margin-bottom:5.4rem}
+.mi-centre-card-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.mi-centre-card h4{font-size:.98rem;font-weight:800}
+.mi-centre-clear{border:0;background:transparent;color:#7b6457;border-radius:0;min-height:34px;padding:0 .15rem;font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.mi-centre-clear:hover{color:#9c421f;text-decoration:underline;text-underline-offset:3px}
+.mi-centre-card img{width:100%;max-height:7.5rem;object-fit:cover;border-radius:.6rem}.mi-centre-card h4,.mi-centre-card p{overflow-wrap:anywhere}.mi-centre-card p{margin:0;color:#5c4a3d;font-size:.79rem;line-height:1.5}
+.mi-centre-sublist{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.1rem}
+.mi-centre-subbtn{min-height:38px;padding:.28rem .68rem;border-radius:10px;border:1px solid rgba(138,102,76,.26);background:#fffdf9;color:#5a4538;font-size:.78rem;font-weight:700;cursor:pointer;transition:border-color 150ms ease,color 150ms ease}
+.mi-centre-subbtn:hover{border-color:#c8581d;color:#9c421f}
+.mobile-insights .mi-primary-cta,.mobile-insights a.mi-primary-cta{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;width:100%;min-height:46px;padding:0 1rem;margin-top:.15rem;border:0;border-radius:14px;background:linear-gradient(135deg,#e27832 0%,#c8581d 100%);color:#ffffff;font-size:.9rem;font-weight:800;text-decoration:none;cursor:pointer;box-shadow:0 8px 18px -8px rgba(175,72,20,.48);transition:filter 150ms ease,transform 150ms ease}
+.mi-primary-cta:hover{filter:brightness(1.04)}
+.mi-primary-cta:active{transform:scale(.99)}
+.mi-link-row{display:flex;flex-wrap:wrap;gap:.35rem .95rem;margin-top:.05rem}.mobile-insights :is(.mi-link-row,.mi-panel>p,.mi-callout,.mi-table) a{font-size:.79rem;font-weight:600;color:#913a20;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere;width:fit-content}
+.mi-centre-card[hidden]{display:none}
+.mi-age-list{display:grid;gap:.3rem}.mi-age{width:100%;display:grid;gap:.45rem;padding:.58rem .65rem;border:1px solid transparent;border-radius:.82rem;background:transparent;text-align:left;cursor:pointer;transition:background-color 160ms ease,border-color 160ms ease}.mi-age:hover{background:#fff7ec}.mi-age[aria-pressed=true]{border-color:#e8b998;background:#fff1e2}.mi-age-row{display:flex;justify-content:space-between;gap:.4rem;align-items:baseline;font-size:.82rem;line-height:1.35}.mi-age-row strong{white-space:nowrap;font-size:.86rem;font-variant-numeric:tabular-nums}.mi-age-track{height:.66rem;background:#f2e5d6;border-radius:999px;overflow:hidden}.mi-age-track i{display:block;height:100%;width:var(--mi-bar);background:linear-gradient(90deg,#e08358,#c95f39);border-radius:inherit}.mi-age:nth-child(2) .mi-age-track i{background:linear-gradient(90deg,#c9613a,#a64222)}.mi-age:nth-child(3) .mi-age-track i{background:linear-gradient(90deg,#f0a667,#dc8643)}.mi-age:nth-child(n+4) .mi-age-track i{background:linear-gradient(90deg,#94a593,#728876)}
+.mi-plot{min-width:0;background:#fffaf2;border:1px solid #f0e0ce;border-radius:.95rem;overflow:hidden}.mi-plot text{font-size:10px;fill:#6b5a4c}.mi-gridline{stroke:#ecdecd;vector-effect:non-scaling-stroke}.mi-series{fill:none;stroke-width:2.35;vector-effect:non-scaling-stroke}.mi-active-line{stroke:#be8a70;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}.mi-plot svg{cursor:crosshair}.mi-legend{display:flex;gap:.9rem;color:#624e3e;font-size:.8rem;font-weight:500}.mi-legend i{display:inline-block;width:.65rem;height:.65rem;border-radius:50%;margin-inline-end:.35rem}.mi-month-controls{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}.mi-month-controls .mi-select{border-radius:.82rem}.mi-month-summary{font-size:.85rem;font-weight:700;color:#6a3928;font-variant-numeric:tabular-nums}.mi-table summary{cursor:pointer;color:#784830;font-size:.82rem;font-weight:600;min-height:44px;display:list-item;padding-top:.65rem}.mi-table table{width:100%;border-collapse:collapse;font-size:.79rem;color:#564841;font-variant-numeric:tabular-nums}.mi-table :is(td,th){text-align:left;border-top:1px solid var(--mi-border);padding:.44rem .22rem}.mi-table :is(td,th):not(:first-child){text-align:right}
+.mi-samples h4{font-size:1.02rem}.mi-sample-list{display:grid;border-top:1px solid #efe0ce}.mi-profile{width:100%;min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:.65rem;text-align:left;background:transparent;border:0;border-bottom:1px solid #efe0ce;padding:.52rem .25rem;cursor:pointer;transition:background-color 150ms ease,padding-inline 150ms ease}.mi-profile:hover{background:#fff5e8;padding-inline:.45rem;border-radius:.55rem}.mi-profile div{display:grid;gap:.12rem;min-width:0;overflow-wrap:anywhere}.mi-profile strong{font-size:.86rem}.mi-profile small{font-size:.74rem;color:var(--mi-muted)}.mi-profile>span{font-size:1.1rem;color:#a04423}
+.mi-callout{display:grid;gap:.4rem;padding:.85rem .95rem;background:#fffaf2;border:1px solid rgba(138,102,76,.16);border-radius:.95rem;color:#67483c;font-size:.84rem;line-height:1.58}.mi-callout h4,.mi-callout p{margin:0}.mi-callout h4{font-size:.92rem;color:var(--mi-ink)}.mi-wait-bar:hover,.mi-wait-bar:focus-visible{background:#fff1e0;border-color:#e8be9e}.mi-wait-bar[aria-pressed=true] .mi-age-track i,.mi-wait-bar:hover .mi-age-track i,.mi-wait-bar:focus-visible .mi-age-track i{background:#a04423}.mi-wait-reading{min-height:2.1rem;margin:0;color:#734424;font-size:.82rem;font-weight:500}
+.mi-scatter .mi-axis{stroke:#cdb4a5;vector-effect:non-scaling-stroke}.mi-scatter .mi-point{cursor:pointer}.mi-scatter .mi-point:focus-visible,.mi-flow .mi-flow-node:focus-visible{outline:none;filter:drop-shadow(0 0 2px #513324)}.mi-scatter-choices{width:100%}.mi-story-card{display:grid;gap:.55rem;padding:.8rem;background:#fffaf2;border:1px solid rgba(138,102,76,.16);border-radius:.95rem}.mi-story-card img{width:100%;max-height:10rem;object-fit:cover;border-radius:.7rem}.mi-story-card h4,.mi-story-card p{margin:0}.mi-story-events{display:grid;gap:.35rem;margin:.1rem 0;padding:0;list-style:none;font-size:.79rem}.mi-story-events li{display:flex;justify-content:space-between;gap:.35rem}.mi-story-events time{font-variant-numeric:tabular-nums;white-space:nowrap}.mi-story-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(100%,32rem);max-height:85dvh;overflow:auto;padding:1.15rem max(1.05rem,env(safe-area-inset-right)) max(1.15rem,env(safe-area-inset-bottom)) max(1.05rem,env(safe-area-inset-left));border:1px solid #ebccb3;border-radius:1.45rem 1.45rem 0 0;background:#fffaf3;color:#422b21;box-shadow:0 -.4rem 2.2rem rgba(42,24,14,.26)}.mi-story-sheet::backdrop{background:rgba(42,24,14,.5);backdrop-filter:blur(5px)}.mi-story-sheet header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.75rem}.mi-story-sheet header h3{font-family:var(--app-display,'Noto Serif TC',Georgia,serif);font-size:1.22rem;margin:0}.mi-story-sheet .mi-filter{font:inherit;background:transparent;border:1px solid rgba(138,102,76,.26);border-radius:10px;margin:.28rem 0;min-height:40px;color:#422b21;padding:0 .8rem}.mi-story-sheet .mi-story-action{background:linear-gradient(135deg,#e27832 0%,#c8581d 100%);border:0;border-radius:14px;color:#fff;width:100%;min-height:46px;font-weight:800}
+.mi-flow .mi-flow-node{cursor:pointer}.mi-flow .mi-flow-node text{font-size:10px;font-weight:700;paint-order:stroke;stroke:#fffaf2;stroke-width:3.5px;stroke-linejoin:round}.mi-flow .mi-flow-node:focus-visible rect,.mi-flow .mi-flow-node[aria-pressed=true] rect{stroke:#a04423;stroke-width:2}.mi-flow .mi-stage-label{font-size:9.5px;font-weight:800;fill:#654636}.mi-flow .mi-flow-ribbon{pointer-events:none;transition:opacity .16s}.mi-flow-controls{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}.mi-flow-controls label{font-size:.82rem;font-weight:700}.mi-flow-detail,.mi-flow-range{font-size:.79rem;color:var(--mi-muted);min-height:.9rem;line-height:1.5}.mi-flow-table td:nth-child(2),.mi-flow-table th:nth-child(2){text-align:left}.mi-flow-reset{border:0;background:transparent;color:#9c421f;text-decoration:underline;text-underline-offset:3px;padding:0 .25rem}.mi-flow-reset[hidden]{display:none}
+.mi-takeaway{display:grid;gap:.3rem;padding:.78rem .92rem;border-radius:.95rem;background:#fffaf2;border:1px solid rgba(138,102,76,.16);color:#422b21}
+.mi-takeaway-kicker{font-size:.72rem;font-weight:800;letter-spacing:.05em;color:#a04423}
+.mi-takeaway-lead{margin:0;font-size:.92rem;font-weight:800;line-height:1.48;color:#3d261b}
+.mi-takeaway-sub{margin:0;font-size:.76rem;color:#6c5245;line-height:1.45}
+.mi-case-entry{width:100%;display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:.72rem;padding:.65rem .78rem;border-radius:.95rem;border:1px solid rgba(138,102,76,.18);background:#fffdf9;text-align:left;cursor:pointer;box-shadow:none;transition:border-color 150ms ease,background-color 150ms ease}
+.mi-case-entry:hover{background:#fffaf3;border-color:rgba(156,66,31,.35)}
+.mi-case-thumb{width:54px;height:54px;border-radius:.72rem;object-fit:cover;background:#f2e2d2;display:block}
+.mi-case-copy{display:grid;gap:.16rem;min-width:0}
+.mi-case-badge{display:inline-flex;width:fit-content;padding:0;border-radius:0;background:transparent;color:#255832;font-size:.72rem;font-weight:800}
+.mi-case-copy strong{font-size:.94rem;font-weight:800;color:#422b21;overflow-wrap:anywhere}
+.mi-case-copy small{font-size:.75rem;color:var(--mi-muted);font-variant-numeric:tabular-nums}
+.mi-case-cta{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px;border-radius:12px;background:linear-gradient(135deg,#e27832 0%,#c8581d 100%);color:#fff;font-size:.78rem;font-weight:800;white-space:nowrap;box-shadow:0 6px 14px -6px rgba(175,72,20,.42)}
+.mi-guide-list{display:grid;gap:.7rem}
+.mi-guide-card{display:grid;gap:.35rem;padding:.85rem .95rem;border-radius:.95rem;background:#fffdf9;border:1px solid rgba(138,102,76,.15)}
+.mi-guide-card h4{margin:0;font-size:.92rem;font-weight:800;color:#422b21}
+.mi-guide-card p{margin:0;font-size:.82rem;line-height:1.58;color:#5d473b}
+.mi-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0}
+.mi-tab{min-width:0;padding-inline:.12rem;min-height:44px}
+.mi-map-stage .mi-atlas{display:block;width:100%;height:auto;background:#e9f1ed}
+.mi-atlas .mi-terrain{fill:#fff8e8;stroke:#b6c3b4;stroke-width:.7;vector-effect:non-scaling-stroke}
+.mi-atlas .mi-marker{cursor:pointer}
+.mi-atlas .mi-marker-bubble{fill:var(--mi-green);stroke:white;stroke-width:1.6}
+.mi-atlas .mi-empty .mi-marker-bubble{fill:#64748b}
+.mi-atlas .mi-marker[aria-pressed=true] .mi-marker-bubble,.mi-atlas .mi-marker:focus-visible .mi-marker-bubble{fill:var(--mi-accent);stroke:#422b21}
+.mi-atlas text{fill:white;text-anchor:middle;dominant-baseline:central;font:700 8px sans-serif;pointer-events:none}
+.mi-centre-choice{width:100%}
+.mi-org{flex:1;min-width:0;max-width:14rem}.mi-org .mi-select{width:100%}
+.mi-case-entry[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){.mi-flow .mi-flow-ribbon,.mi-pin-core,.mi-pin-tag,.mi-case-entry,.mi-primary-cta{transition:none}}
 `;
 
 function node(tag, className, label) {
@@ -80,6 +197,9 @@ function panel(title, detail) {
   return block;
 }
 
+const HK_CENTER = { lat: 22.345, lng: 114.155 };
+const HK_MAX_BOUNDS = { south: 22.12, west: 113.78, north: 22.59, east: 114.48 };
+
 function project(longitude, latitude) {
   return [12 + (longitude - 113.82) / .70 * 320, 10 + (22.58 - latitude) / .45 * 217];
 }
@@ -94,8 +214,39 @@ function boundary(geometry) {
   }).join('') + 'Z')).join(' ');
 }
 
-function centreMap(data, selectedCentre, onCentre) {
-  const block = panel('公開領養中心', '數字是官網明列待領養且能對應到此中心的貓狗檔案。灰點表示地址已核對，目前沒有可對應的檔案。');
+function districtMap(data, points, onCentre) {
+  const image = drawing('svg', {class:'mi-atlas', viewBox:'0 0 344 237', role:'group', 'aria-label':'香港領養中心地圖'});
+  const markers = new Map();
+  for (const district of data.districts_geojson?.features || []) {
+    image.append(drawing('path', {d:boundary(district.geometry), class:'mi-terrain', 'fill-rule':'evenodd', 'aria-hidden':'true'}));
+  }
+  const maximum = Math.max(1, ...points.map(point => point.count));
+  for (const point of [...points].sort((first, second) => second.count - first.count)) {
+    const [centre] = point.entries;
+    const [x, y] = project(centre.longitude, centre.latitude);
+    const radius = point.count ? 6 + Math.sqrt(point.count / maximum) * 7 : 4.5;
+    const count = point.count ? format(point.count) + ' 則待領養檔案' : '尚無可對應的檔案';
+    const marker = drawing('g', {class:point.count ? 'mi-marker' : 'mi-marker mi-empty',
+      transform:`translate(${x} ${y})`, tabindex:'0', role:'button', 'aria-pressed':'false',
+      'aria-label':point.name + '，' + count});
+    marker.append(drawing('title', {}, point.name + ' · ' + count),
+      drawing('circle', {r:Math.max(10, radius), fill:'transparent'}), drawing('circle', {r:radius, class:'mi-marker-bubble'}));
+    if (point.count) marker.append(drawing('text', {x:0,y:0}, format(point.count)));
+    marker.addEventListener('click', () => onCentre(point.id));
+    marker.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        onCentre(point.id);
+      }
+    });
+    image.append(marker);
+    markers.set(point.id, marker);
+  }
+  return {image, markers};
+}
+
+function centreMap(data, selectedCentre, onCentre, api, species) {
+  const block = node('section', 'mi-panel');
   const centres = data.centres || [];
   const located = centres.filter(item => finite(item.longitude) && finite(item.latitude));
   const byCoordinate = new Map();
@@ -106,129 +257,303 @@ function centreMap(data, selectedCentre, onCentre) {
   }
   const points = [...byCoordinate].map(([key, entries]) => ({
     id: entries.length === 1 ? entries[0].id : `location:${key}`,
-    name: entries.length === 1 ? entries[0].name : `${entries[0].organisation} · 同址 ${entries.length} 個中心`,
+    name: entries.length === 1 ? entries[0].name : `${entries[0].organisation}（同址 ${entries.length} 中心）`,
+    shortName: entries.length === 1 ? (entries[0].short_name || entries[0].name) : `${entries[0].organisation} · ${entries.length}處`,
+    district: entries[0].district || '',
     entries,
     count: entries.reduce((total, entry) => total + entry.count, 0),
   }));
   const shared = new Map(points.filter(point => point.entries.length > 1).map(point => [point.id, point]));
-  const maximum = Math.max(1, ...points.map(point => point.count));
-  const coverage = data.map_coverage;
-  if (coverage?.mapped_centres) {
-    block.append(node('p','mi-map-coverage',
-      `${format(coverage.mapped_organisations)} 家機構 · ${format(coverage.mapped_centres)} 個中心 · ${format(coverage.map_points)} 個地圖點`));
-  }
-  const map = node('div', 'mi-map');
-  const image = drawing('svg', {viewBox:'0 0 344 237', role:'group', 'aria-label':'香港領養中心地圖'});
-  for (const district of data.districts_geojson?.features || []) {
-    image.append(drawing('path', {d:boundary(district.geometry), class:'mi-terrain', 'fill-rule':'evenodd', 'aria-hidden':'true'}));
-  }
-  const markers = new Map();
-  let selected = selectedCentre;
-  for (const point of points.sort((a,b) => b.count - a.count)) {
-    const [centre] = point.entries;
-    const [x, y] = project(centre.longitude, centre.latitude);
-    const radius = point.entries.length > 1 && !point.count ? 8 : 5.5 + Math.sqrt(point.count / maximum) * 8.5;
-    const countLabel = point.count ? `${format(point.count)} 則已對應檔案` : '暫無已對應檔案';
-    const marker = drawing('g', {class:`mi-marker${point.count ? '' : ' mi-empty'}`, transform:`translate(${x} ${y})`, tabindex:'0', role:'button',
-      'aria-label':`${point.name}，${countLabel}`, 'aria-pressed':'false'});
-    marker.append(drawing('circle',{r:Math.max(12, radius), fill:'transparent'}), drawing('circle',{r:radius, class:'mi-marker-bubble'}));
-    if (point.count || point.entries.length > 1) marker.append(drawing('text',{x:0,y:0},point.count ? format(point.count) : `${point.entries.length}處`));
-    marker.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') showCentre(point.id); });
-    marker.addEventListener('pointerleave', event => { if (event.pointerType === 'mouse') showCentre(selected); });
-    marker.addEventListener('focus', () => showCentre(point.id));
-    marker.addEventListener('blur', () => showCentre(selected));
-    marker.addEventListener('click', event => {
-      const official = point.entries.length === 1 && source('機構官網', centre.source_url);
-      if (event.pointerType === 'mouse' && official) {
-        showCentre(point.id);
-        window.open(official.href, '_blank', 'noopener,noreferrer');
-      } else {
-        onCentre(point.id);
-      }
-    });
-    marker.addEventListener('keydown', event => {
-      if (!['Enter',' '].includes(event.key)) return;
-      event.preventDefault();
-      onCentre(point.id);
-    });
-    image.append(marker);
-    markers.set(point.id, marker);
-  }
-  if (located.length || data.districts_geojson?.features?.length) {
-    map.append(image);
-    block.append(map);
-  }
-  const choices = select('mi-select mi-centre-select','選擇公開領養中心',
-    [['','選擇中心'],...[...shared.values()].map(point => [point.id,point.name]),
-      ...centres.map(item => [item.id,`${item.name} · ${item.count ? format(item.count) + ' 則' : '暫無已對應檔案'}`])],selectedCentre,onCentre);
-  if (centres.length) block.append(choices);
-  const card = node('div','mi-centre-card');
-  card.setAttribute('aria-live','polite');
-  block.append(card);
-  const sourceLinks = node('div','mi-link-row');
-  const original = source('行政區邊界來源',data.districts_source_url);
-  if (original) sourceLinks.append(original);
-  block.append(sourceLinks);
 
-  function update(id) {
-    selected = id;
-    choices.value = id;
-    for (const [key,marker] of markers) {
-      const active = key === id || shared.get(key)?.entries.some(entry => entry.id === id);
-      marker.setAttribute('aria-pressed',String(Boolean(active)));
+  const head = node('div', 'mi-map-head');
+  head.append(node('h3', '', '領養中心分布'));
+  const resetMapBtn = button('mi-map-reset', '‹ 全港概覽', () => onCentre(''));
+  resetMapBtn.hidden = true;
+  resetMapBtn.setAttribute('aria-label', '清除中心篩選並返回全港視角');
+  head.append(resetMapBtn);
+  block.append(head);
+
+  const stage = node('div', 'mi-map-stage');
+  const canvas = node('div', 'mi-map-canvas');
+  canvas.setAttribute('role', 'region');
+  canvas.setAttribute('aria-label', '香港領養中心 Google Maps 互動地圖');
+  const atlas = districtMap(data, points, onCentre);
+  stage.append(atlas.image);
+  block.append(stage);
+
+  const hint = node('p', 'mi-map-hint', '點選標記或選擇中心。灰點代表尚無可對應的檔案。');
+  block.append(hint);
+  const choices = select('mi-select mi-centre-choice', '選擇公開領養中心',
+    [['', '選擇領養中心'], ...[...shared].map(([id, point]) => [id, point.name]),
+      ...centres.map(centre => [centre.id, centre.name + '（' + format(centre.count) + ' 則）'])], selectedCentre, onCentre);
+  if (centres.length) block.append(choices);
+  const boundarySource = source('行政區邊界來源 ↗', data.districts_source_url);
+  if (boundarySource) block.append(boundarySource);
+
+  const card = node('div', 'mi-centre-card');
+  card.hidden = true;
+  card.setAttribute('aria-live', 'polite');
+  block.append(card);
+
+  const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  let selected = selectedCentre;
+  let gmap = null;
+  let LatLngBoundsCtor = null;
+  let destroyed = false;
+  const pinButtons = new Map();
+  const markerInstances = new Map();
+
+  function fitAllPoints() {
+    if (!gmap || !LatLngBoundsCtor) return;
+    if (points.length >= 2) {
+      const bounds = new LatLngBoundsCtor();
+      for (const point of points) {
+        const [c] = point.entries;
+        bounds.extend({ lat: c.latitude, lng: c.longitude });
+      }
+      gmap.fitBounds(bounds, { top: 44, right: 32, bottom: 32, left: 32 });
+      return;
     }
-    showCentre(id);
+    if (points.length === 1) {
+      const [c] = points[0].entries;
+      gmap.setCenter({ lat: c.latitude, lng: c.longitude });
+      gmap.setZoom(13);
+      return;
+    }
+    gmap.setCenter(HK_CENTER);
+    gmap.setZoom(10.6);
   }
+
+  function focusSelectedPoint(id) {
+    if (!gmap || !id) return;
+    const direct = points.find(p => p.id === id || p.entries.some(e => e.id === id));
+    if (!direct) return;
+    const [c] = direct.entries;
+    const target = { lat: c.latitude, lng: c.longitude };
+    const nextZoom = Math.max(gmap.getZoom() || 10.6, 13.2);
+    if (typeof gmap.moveCamera === 'function') {
+      gmap.moveCamera({ center: target, zoom: nextZoom });
+    } else {
+      gmap.setCenter(target);
+      gmap.setZoom(nextZoom);
+    }
+  }
+
+  function syncMarkersSelection(id) {
+    for (const [key, marker] of atlas.markers) {
+      const active = key === id || shared.get(key)?.entries.some(entry => entry.id === id);
+      marker.setAttribute('aria-pressed', String(Boolean(active)));
+    }
+    for (const [key, pin] of pinButtons) {
+      const active = key === id || shared.get(key)?.entries.some(entry => entry.id === id);
+      pin.setAttribute('aria-pressed', String(Boolean(active)));
+      const entry = markerInstances.get(key);
+      if (entry) entry.marker.zIndex = active ? 2000 : entry.baseZ;
+    }
+  }
+
+  function useAtlas() {
+    for (const { marker } of markerInstances.values()) marker.map = null;
+    markerInstances.clear();
+    pinButtons.clear();
+    gmap = null;
+    if (!destroyed) {
+      stage.replaceChildren(atlas.image);
+      if (boundarySource) boundarySource.hidden = false;
+    }
+  }
+  window.addEventListener('adoption-maps-unavailable', useAtlas);
+  loadGoogleMapsBundle(api)
+    .then(bundle => {
+      if (destroyed || !bundle || mapsAuthFailed) return;
+      const { Map: GoogleMap, AdvancedMarkerElement, LatLngBounds } = bundle;
+      LatLngBoundsCtor = LatLngBounds;
+      stage.replaceChildren(canvas);
+      if (boundarySource) boundarySource.hidden = true;
+
+      gmap = new GoogleMap(canvas, {
+        center: HK_CENTER,
+        zoom: 10.6,
+        mapId: 'DEMO_MAP_ID',
+        mapTypeId: 'roadmap',
+        mapTypeControl: true,
+        cameraControl: false,
+        zoomControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        gestureHandling: 'cooperative',
+        clickableIcons: false,
+        restriction: {
+          latLngBounds: HK_MAX_BOUNDS,
+          strictBounds: false,
+        },
+      });
+
+      for (const point of [...points].sort((a, b) => a.count - b.count)) {
+        const [centre] = point.entries;
+        const countText = point.count ? format(point.count) : '';
+        const countLabel = point.count ? `${format(point.count)} 則待領養檔案` : '暫無對應檔案';
+        const baseZ = point.count ? 100 + point.count : 10;
+
+        let lastActivateAt = 0;
+        const activate = event => {
+          event?.stopPropagation?.();
+          const now = Date.now();
+          if (now - lastActivateAt < 150) return;
+          lastActivateAt = now;
+          onCentre(point.id);
+        };
+
+        const pin = button(`mi-pin${point.count ? '' : ' is-empty'}`, '', activate);
+        pin.setAttribute('aria-label', `${point.name}，${countLabel}`);
+        pin.setAttribute('aria-pressed', 'false');
+
+        const core = node('span', 'mi-pin-core', countText);
+        const tag = node('span', 'mi-pin-tag', point.shortName);
+        tag.setAttribute('aria-hidden', 'true');
+        pin.append(tag, core);
+
+        const marker = new AdvancedMarkerElement({
+          map: gmap,
+          position: { lat: centre.latitude, lng: centre.longitude },
+          title: `${point.name}，${countLabel}`,
+          zIndex: baseZ,
+        });
+        marker.append(pin);
+        marker.addEventListener('click', activate);
+
+        pinButtons.set(point.id, pin);
+        markerInstances.set(point.id, { marker, baseZ });
+      }
+
+      syncMarkersSelection(selected);
+      if (selected) focusSelectedPoint(selected);
+      else fitAllPoints();
+    })
+    .catch(useAtlas);
 
   function showCentre(id) {
     const centre = centres.find(item => item.id === id);
     const group = shared.get(id);
     if (card.dataset.centre === id) return;
     card.dataset.centre = id;
-    card.hidden = false;
     card.replaceChildren();
     if (group) {
-      card.append(node('h4','',group.name),node('p','','選擇中心以查看舖號、檔案及官網。'));
-      for (const entry of group.entries) card.append(button('mi-filter',entry.name,() => onCentre(entry.id)));
+      card.hidden = false;
+      const top = node('div', 'mi-centre-card-top');
+      top.append(node('h4', '', group.shortName || group.name), button('mi-centre-clear', '收起', () => onCentre('')));
+      card.append(top);
+      const first = group.entries[0];
+      const metaParts = [first?.district, first?.address].filter(Boolean).join(' · ');
+      if (metaParts) card.append(node('p', '', metaParts));
+      const sublist = node('div', 'mi-centre-sublist');
+      for (const entry of group.entries) {
+        sublist.append(button('mi-centre-subbtn', `${entry.short_name || entry.name}（${format(entry.count)} 則）`, () => onCentre(entry.id)));
+      }
+      card.append(sublist);
       return;
     }
     if (!centre) {
-      const unmatched = data.unknown_centre + data.centre_unavailable_count;
-      if (!located.length) card.append(node('p','','這個篩選範圍暫無已核對的公開中心座標。'));
-      if (unmatched > 0) card.append(node('p','',`${format(unmatched)} 則檔案暫未能標到地圖上。可用上方機構篩選查看名錄。`));
-      card.hidden = !card.childElementCount;
+      card.hidden = true;
       return;
     }
-    const photoSource = source('中心照片',centre.photo_url);
+    card.hidden = false;
+    const photoSource = source('中心照片', centre.photo_url);
     if (photoSource) {
       const photo = node('img');
       photo.src = photoSource.href;
       photo.alt = centre.name;
       photo.loading = 'lazy';
-      photo.addEventListener('error', () => photo.remove(), {once:true});
+      photo.addEventListener('error', () => photo.remove(), { once: true });
       card.append(photo);
     }
-    card.append(node('h4','',centre.name),node('p','',centre.count ? `${format(centre.count)} 則檔案已對應到此中心` : '本次範圍暫無檔案可核實屬於此中心。'));
-    if (centre.organisation_listing_count > centre.count) {
-      card.append(node('p','',`此機構在本次範圍共有 ${format(centre.organisation_listing_count)} 則官網明列待領養檔案。`));
+    const top = node('div', 'mi-centre-card-top');
+    top.append(node('h4', '', centre.short_name || centre.name), button('mi-centre-clear', '收起', () => onCentre('')));
+    card.append(top);
+    const metaParts = [centre.district, centre.address].filter(Boolean).join(' · ');
+    if (metaParts) card.append(node('p', '', metaParts));
+    card.append(node('p', '', centre.count
+      ? `${format(centre.count)} 則待領養`
+      : '本站尚無可對應此中心的檔案，可向機構查詢。'));
+    const reference = source('機構官網 ↗', centre.source_url);
+    const gmapsUrl = finite(centre.latitude) && finite(centre.longitude)
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${centre.latitude},${centre.longitude}`)}`
+      : centre.coordinate_source_url;
+    const coordinate = source('Google Maps ↗', gmapsUrl);
+    if (centre.count > 0) {
+      const query = new URLSearchParams({ centre_id: centre.id });
+      if (species) query.set('species', species);
+      const listings = node('a', 'mi-primary-cta', `查看全部 ${format(centre.count)} 則檔案`);
+      listings.href = '#discover?' + query;
+      card.append(listings);
+    } else if (reference) {
+      const primaryRef = source('前往機構官網查詢 ↗', centre.source_url);
+      if (primaryRef) {
+        primaryRef.className = 'mi-primary-cta';
+        card.append(primaryRef);
+      }
     }
-    if (centre.address) card.append(node('p','',centre.address));
-    if (!located.includes(centre)) card.append(node('p','','此中心座標待核。'));
-    const reference = source('查看機構公開資料',centre.source_url);
-    const coordinate = source('座標來源',centre.coordinate_source_url);
-    const links = node('div','mi-link-row');
-    if (reference) links.append(reference);
+    const links = node('div', 'mi-link-row');
+    if (centre.count > 0 && reference) links.append(reference);
     if (coordinate && coordinate.href !== reference?.href) links.append(coordinate);
     if (links.childElementCount) card.append(links);
   }
-  update(selectedCentre);
-  return {block, update, shared};
+
+  function update(id, { animate = true } = {}) {
+    const changed = selected !== id;
+    selected = id;
+    choices.value = id;
+    stage.classList.toggle('has-selection', Boolean(id));
+    resetMapBtn.hidden = !id;
+    hint.hidden = Boolean(id);
+    syncMarkersSelection(id);
+    showCentre(id);
+    if (changed) {
+      if (id) {
+        focusSelectedPoint(id);
+        if (animate && !card.hidden) {
+          requestAnimationFrame(() => {
+            card.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
+          });
+        }
+      } else {
+        fitAllPoints();
+      }
+    }
+  }
+
+  function destroy() {
+    destroyed = true;
+    window.removeEventListener('adoption-maps-unavailable', useAtlas);
+    useAtlas();
+  }
+
+  update(selectedCentre, { animate: false });
+  return { block, update, shared, destroy };
+}
+
+function takeawayBanner(kicker, lead, sub = '') {
+  const box = node('div', 'mi-takeaway');
+  if (kicker) box.append(node('span', 'mi-takeaway-kicker', kicker));
+  box.append(node('p', 'mi-takeaway-lead', lead));
+  if (sub) box.append(node('p', 'mi-takeaway-sub', sub));
+  return box;
 }
 
 function ageChart(data, selectedAge, onAge) {
-  const block = panel('名錄年齡分布','每則公開刊登計一次。可點選年齡組查看部分檔案。');
+  const block = panel('年齡分布','點選年齡組篩選下方動物');
   const rows = node('div','mi-age-list');
   const ages = data.ages || [];
+  const known = ages.filter(item => item.key !== 'unknown' && finite(item.count) && item.count > 0);
+  const unknown = ages.find(item => item.key === 'unknown')?.count || 0;
+  const totalCount = data.total || ages.reduce((sum, item) => sum + (item.count || 0), 0);
+  if (known.length) {
+    const topAge = known.reduce((best, item) => item.count > best.count ? item : best, known[0]);
+    const pct = totalCount ? Math.round((topAge.count / totalCount) * 100) : 0;
+    const lead = `已標註年齡的檔案中，以「${topAge.label}」最多（${format(topAge.count)} 則，佔 ${pct}%）`;
+    const sub = unknown > 0 ? `另有 ${format(unknown)} 則官網未明示年齡或跨年齡組。` : '';
+    block.append(takeawayBanner('重點結論', lead, sub));
+  }
   const maximum = Math.max(1,...ages.map(item => item.count || 0));
   const keys = new Map();
   for (const age of ages) {
@@ -282,7 +607,7 @@ function waitCoverage(waiting) {
 
 function waitingChart(waiting) {
   const statistic = waiting.statistic_label || '等待天數';
-  const block = panel('等待天數',`按有資料支持的品種分組查看${statistic}。點選或指向柱形可讀取數值。`);
+  const block = panel('等待天數',`各品種${statistic}`);
   const coverage = waitCoverage(waiting);
   if (coverage) block.append(node('p','mi-note',coverage));
   const groups = (waiting.groups || []).filter(group => supportedDuration(group.value) && group.label);
@@ -363,7 +688,7 @@ function openStorySheet(item, openProfile) {
 }
 
 function scatterChart(waiting, openProfile) {
-  const block = panel('你願意領養牠嗎？','觀察有支持的等待時間與年齡。點選長候個案可打開牠的領養故事。');
+  const block = panel('領養故事','點選圓點查看長候個案');
   const points = (waiting.points || []).filter(item => item.id && supportedDuration(item.wait_days) && supportedDuration(item.age_years));
   if (!points.length) {
     const notice = node('div','mi-callout');
@@ -437,6 +762,19 @@ function scatterChart(waiting, openProfile) {
 
 const flowColumns = new Map([[0,0],[1,1],[2,2],['0',0],['1',1],['2',2],['start',0],['breed',1],['end',2]]);
 
+function flowShortLabel(label) {
+  const map = {
+    '官網列為待領養': '待領養',
+    '可申請領養或暫養': '領養/暫養',
+    '申請中／試領養': '試領養',
+    '官網列為已領養': '已領養',
+    '官網標註混種': '混種',
+    '官網明示純種': '純種',
+    '官網未明示品種類別': '未標品種',
+  };
+  return map[label] || label;
+}
+
 function flowColor(breed) {
   if (breed === 'mixed' || breed === 'crossbreed') return '#bf5939';
   if (['pure','purebred'].includes(breed)) return '#487d68';
@@ -444,12 +782,12 @@ function flowColor(breed) {
 }
 
 function flowLayout(levels, links) {
-  const top = 26;
-  const gap = 15;
-  const height = Math.max(170,top + Math.max(...levels.map(items => items.length)) * 27 + 30);
-  const inner = height - top - 10;
+  const top = 28;
+  const gap = 20;
+  const height = Math.max(196,top + Math.max(...levels.map(items => items.length)) * 34 + 34);
+  const inner = height - top - 14;
   const widths = [10,12,10];
-  const x = [9,165,325];
+  const x = [8,166,326];
   const items = levels.flat();
   const byId = new Map(items.map(item => [item.id,item]));
   for (const item of items) {
@@ -467,7 +805,7 @@ function flowLayout(levels, links) {
       item.y = y;
       item.width = widths[index];
       item.size = rawSize;
-      item.tall = Math.max(7,rawSize);
+      item.tall = Math.max(8,rawSize);
       item.input = y;
       item.output = y;
       y += rawSize+gap;
@@ -485,8 +823,33 @@ function flowLayout(levels, links) {
   return {height,items};
 }
 
-function flowChart(flow, priorBreed, onBreed) {
-  const block = panel('生命流向',flow.basis || '以同一則已核對刊登在兩個快照的觀察狀態配對。線條表示刊登紀錄，取樣範圍以資料來源為準。');
+function featuredCaseEntry(story, openProfile) {
+  if (!story?.id) return null;
+  const card = button('mi-case-entry', '', () => openProfile(story.id));
+  card.setAttribute('aria-label', `查看已領養個案 ${story.name || '動物'} 的完整檔案`);
+  const thumb = imageAsset(story.photo_url, story.name || '已領養動物');
+  if (thumb) {
+    thumb.className = 'mi-case-thumb';
+    card.append(thumb);
+  } else {
+    card.append(node('span', 'mi-case-thumb', ''));
+  }
+  const copy = node('div', 'mi-case-copy');
+  const events = (story.observations || []).filter(e => e.date && e.status_label);
+  const timelineText = events.length >= 2
+    ? `${events[0].date.slice(5)} 待領養 → ${events.at(-1).date.slice(5)} 已領養`
+    : '已由兩次官網快照核對';
+  copy.append(
+    node('span', 'mi-case-badge', '已領養個案'),
+    node('strong', '', story.name || '動物個案'),
+    node('small', '', timelineText),
+  );
+  card.append(copy, node('span', 'mi-case-cta', '查看檔案'));
+  return card;
+}
+
+function flowChart(flow, waiting, priorBreed, onBreed, openProfile) {
+  const block = panel('生命流向','先看兩期快照結論，再點圖檢視細分路徑');
   const rawNodes = new Map((flow.nodes || []).filter(item => item.id && item.label && flowColumns.has(item.column)).map(item => [item.id,{...item,column:flowColumns.get(item.column)}]));
   const all = [];
   for (const link of flow.links || []) {
@@ -495,14 +858,19 @@ function flowChart(flow, priorBreed, onBreed) {
     const breedGroup = link.breed_group || (first.column === 1 ? first.breed_group : second.breed_group);
     all.push({...link,breedGroup});
   }
-  const observed = [flow.observed_range,finite(flow.included_count) ? `全品種可比對 ${format(flow.included_count)} 則` : '',finite(flow.excluded_count) ? `未納入 ${format(flow.excluded_count)} 則` : ''].filter(Boolean).join(' · ');
-  if (observed) block.append(node('p','mi-flow-range',observed));
+
+  const summary = node('div');
+  block.append(summary);
+
+  const caseEntry = featuredCaseEntry(waiting?.fallback_story, openProfile);
+  if (caseEntry) block.append(caseEntry);
+
   const choices = [['','全部品種'],...(flow.breed_options || []).filter(item => item.id && item.label).map(item => [item.id,item.label])];
   let breed = choices.some(([id]) => id === priorBreed) ? priorBreed : '';
   const controls = node('div','mi-flow-controls');
   const chooser = select('mi-select','按品種篩選生命流向',choices,breed,value => { breed = value; onBreed(value); draw(); });
   chooser.id = 'mi-flow-breed';
-  const label = node('label','','品種');
+  const label = node('label','','品種篩選');
   label.htmlFor = chooser.id;
   const reset = button('mi-filter mi-flow-reset','清除聚焦',() => focus(''));
   reset.hidden = true;
@@ -518,21 +886,27 @@ function flowChart(flow, priorBreed, onBreed) {
     detail.textContent = '';
     reset.hidden = true;
     const links = all.filter(link => !breed || link.breedGroup === breed).map(link => ({...link}));
+    const visibleCount = links.filter(link => rawNodes.get(link.source).column === 0).reduce((sum,link) => sum + link.value,0);
+    const laterCount = status => links.filter(link => link.target === 'last:' + status).reduce((total,edge) => total + edge.value,0);
+    const trial = laterCount('trial');
+    const sub = [flow.observed_range, trial ? `較新快照有 ${format(trial)} 則列為申請中／試領養` : ''].filter(Boolean);
+    summary.replaceChildren(takeawayBanner('重點結論',
+      `兩次快照可比對 ${format(visibleCount)} 則刊登，其中 ${format(laterCount('adopted'))} 則在較新快照列為已領養`, sub.join(' · ')));
+    if (caseEntry) caseEntry.hidden = Boolean(breed);
     if (!links.length) {
       const gap = node('div','mi-callout');
-      gap.append(node('h4','','這個篩選範圍暫無可比對的流向'),node('p','','圖表需要兩次觀察能連到同一則官網刊登。可切換品種、物種或機構重新查看。'));
+      gap.append(node('h4','','這個篩選範圍暫無可比對的流向'),node('p','','圖表需要兩次觀察能連到同一則官網刊登。可切換品種或物種重新查看。'));
       output.append(gap);
       return;
     }
-    const visibleCount = links.filter(link => rawNodes.get(link.source).column === 0).reduce((sum,link) => sum + link.value,0);
     const linkedIds = new Set(links.flatMap(link => [link.source,link.target]));
     const levels = [0,1,2].map(stage => [...rawNodes.values()].filter(item => item.column === stage && linkedIds.has(item.id)).map(item => ({...item})));
     const {height,items} = flowLayout(levels,links);
     const wrap = node('div','mi-plot mi-flow');
     const chart = drawing('svg',{viewBox:`0 0 344 ${height}`,role:'group','aria-label':'兩次刊登快照的可比對流向圖'});
-    chart.append(drawing('text',{x:9,y:14,class:'mi-stage-label'},flow.start_label || '較早快照'),
-      drawing('text',{x:171,y:14,class:'mi-stage-label','text-anchor':'middle'},'品種分組'),
-      drawing('text',{x:335,y:14,class:'mi-stage-label','text-anchor':'end'},flow.end_label || '較新快照'));
+    chart.append(drawing('text',{x:8,y:15,class:'mi-stage-label'},flow.start_label || '較早快照'),
+      drawing('text',{x:172,y:15,class:'mi-stage-label','text-anchor':'middle'},'品種分組'),
+      drawing('text',{x:336,y:15,class:'mi-stage-label','text-anchor':'end'},flow.end_label || '較新快照'));
     const labels = new Map();
     const ribbons = [];
     let selected = '', transient = '';
@@ -547,7 +921,7 @@ function flowChart(flow, priorBreed, onBreed) {
       for (const [id, element] of labels) element.setAttribute('aria-pressed',String(id === selected));
       reset.hidden = !selected;
       const item = items.find(entry => entry.id === active);
-      detail.textContent = item ? `${item.label}：${format(item.amount)} 則刊登` : `本圖顯示 ${format(visibleCount)} 則刊登。點選或指向節點可查看相連的路徑。`;
+      detail.textContent = item ? `${item.label}：${format(item.amount)} 則刊登` : `本圖顯示 ${format(visibleCount)} 則刊登，點選節點可查看相連路徑。`;
     }
 
     focus = id => {
@@ -565,10 +939,13 @@ function flowChart(flow, priorBreed, onBreed) {
       const control = drawing('g',{class:'mi-flow-node',role:'button',tabindex:0,
         'aria-label':`${item.label}，${format(item.amount)} 則刊登`,'aria-pressed':false});
       const y = item.y+(item.size-item.tall)/2;
-      control.append(drawing('rect',{x:item.x-4,y:y-4,width:item.width+8,height:item.tall+8,fill:'transparent',rx:3}),
+      const shortName = flowShortLabel(item.label);
+      const labelX = item.column === 0 ? item.x + item.width + 5 : item.column === 1 ? item.x + item.width / 2 : item.x - 5;
+      const anchor = item.column === 0 ? 'start' : item.column === 1 ? 'middle' : 'end';
+      const labelY = item.column === 1 ? Math.max(26, y - 5) : item.y + item.size / 2 + 3.5;
+      control.append(drawing('rect',{x:item.x-5,y:y-5,width:item.width+10,height:item.tall+10,fill:'transparent',rx:3}),
         drawing('rect',{x:item.x,y,width:item.width,height:item.tall,fill:item.column === 1 ? flowColor(item.breed_group) : '#8b7366',rx:2}),
-        drawing('text',{x:item.column === 2 ? item.x-4 : item.x+item.width+4,y:item.y+item.size/2+3,
-          'text-anchor':item.column === 2 ? 'end' : 'start'},item.label));
+        drawing('text',{x:labelX,y:labelY,'text-anchor':anchor},`${shortName} ${format(item.amount)}`));
       control.addEventListener('click',() => focus(item.id));
       for (const type of ['pointerenter','focus']) control.addEventListener(type,() => { transient = item.id; update(); });
       for (const type of ['pointerleave','blur']) control.addEventListener(type,() => { if (transient === item.id) transient = ''; update(); });
@@ -598,11 +975,58 @@ function flowChart(flow, priorBreed, onBreed) {
     }
     table.append(head,body);
     const details = node('details','mi-table');
-    details.append(node('summary','','查看路徑計數表'),table);
+    details.append(node('summary','','查看完整路徑計數表'),table);
     output.append(wrap,details);
     update();
   }
   draw();
+  return block;
+}
+
+function guidePanel(data, waiting, flow, openProfile) {
+  const block = panel('資料如何解讀','了解各圖表的口徑限制與空缺原因');
+  const list = node('div', 'mi-guide-list');
+
+  const hasValidWait = (waiting?.groups || []).some(group => supportedDuration(group.value) && group.label);
+  if (hasValidWait) {
+    block.append(waitingChart(waiting));
+    if (waiting.points?.length) block.append(scatterChart(waiting, openProfile));
+  } else {
+    const waitCard = node('article', 'mi-guide-card');
+    const missing = finite(waiting?.missing_start) ? format(waiting.missing_start) : format(data?.total);
+    const valid = finite(waiting?.valid_count) ? format(waiting.valid_count) : '0';
+    waitCard.append(
+      node('h4', '', '為何未將「等待天數」放在首屏圖表？'),
+      node('p', '', `目前 ${missing} 則待領養刊登均缺有效起算日（可核對 ${valid} 則）。多數機構網站只標示目前開放領養，未公開動物上架日期；兩次快照只能確認觀察當日狀態，因此不作推算，待機構補充日期後再繪圖。`),
+    );
+    list.append(waitCard);
+  }
+
+  const flowCard = node('article', 'mi-guide-card');
+  const included = finite(flow?.included_count) ? format(flow.included_count) : '—';
+  const excluded = finite(flow?.excluded_count) ? format(flow.excluded_count) : '—';
+  const range = flow?.observed_range || '兩次公開快照';
+  flowCard.append(
+    node('h4', '', '「生命流向」如何比對兩期快照？'),
+    node('p', '', `以 ${range} 期間能對上同一官網刊登編號的 ${included} 則檔案作跨期對照；其餘 ${excluded} 則因僅出現於單一期快照或無法對應同一刊登而未納入流向圖。`),
+  );
+  list.append(flowCard);
+
+  const mapCard = node('article', 'mi-guide-card');
+  const plotted = data?.map_coverage?.plotted_listings ?? (data?.total - (data?.unknown_centre || 0) - (data?.centre_unavailable_count || 0));
+  const unplotted = Math.max(0, (data?.total || 0) - (plotted || 0));
+  mapCard.append(
+    node('h4', '', '「中心地圖」涵蓋哪些檔案？'),
+    node('p', '', `此範圍有 ${format(plotted)} 則檔案可對應到地圖上的中心。其餘 ${format(unplotted)} 則暫無可核實的中心位置，可在「探索」查看。`),
+  );
+  list.append(mapCard);
+
+  block.append(list);
+
+  const caseEntry = featuredCaseEntry(waiting?.fallback_story, openProfile);
+  if (caseEntry) {
+    block.append(node('p', 'mi-note', '可核對跨期狀態變化的代表個案：'), caseEntry);
+  }
   return block;
 }
 
@@ -612,7 +1036,7 @@ function monthIndex(value) {
 }
 
 function trendChart(data, species, lastMonth, onMonth) {
-  const block = panel('月度領養趨勢','資料來自香港拯救貓狗協會的機構月報，缺少數值的月份保留空檔。');
+  const block = panel('月度領養趨勢','香港拯救貓狗協會月報紀錄');
   const rows = (data.timeline || []).map(row => ({...row,index:monthIndex(row.period)})).filter(row => row.index !== null).sort((a,b) => a.index - b.index);
   const series = [{key:'cat',label:'貓',color:'#ab482c'},{key:'dog',label:'狗',color:'#3c7767'}].filter(item => !species || item.key === species);
   const values = rows.flatMap(row => series.map(item => row[item.key])).filter(finite);
@@ -620,6 +1044,15 @@ function trendChart(data, species, lastMonth, onMonth) {
     block.append(node('p','','這個物種暫無可顯示的月度資料。'));
     return block;
   }
+  const latestRow = rows.at(-1);
+  const rowSum = row => series.reduce((sum, item) => sum + (finite(row[item.key]) ? row[item.key] : 0), 0);
+  const peakRow = rows.reduce((best, row) => rowSum(row) > rowSum(best) ? row : best, rows[0]);
+  const latestParts = series.map(item => `${item.label} ${finite(latestRow[item.key]) ? format(latestRow[item.key]) : '—'}`).join('、');
+  block.append(takeawayBanner(
+    '重點結論',
+    `最新月報 ${latestRow.period} 錄得 ${latestParts} 隻獲領養`,
+    `期內高峰為 ${peakRow.period}（共 ${format(rowSum(peakRow))} 隻）`,
+  ));
   const first = rows[0].index;
   const last = rows.at(-1).index;
   const left = 31, right = 330, top = 12, bottom = 132;
@@ -710,16 +1143,16 @@ function trendChart(data, species, lastMonth, onMonth) {
 }
 
 function listingSample(root, entries, openProfile, scope) {
-  root.replaceChildren(node('h4','','範圍內的刊登檔案'));
-  const list = node('div','mi-sample-list');
-  if (scope) root.append(node('p','mi-note',`${scope} · 刊登樣本`));
-  if (!entries.length) list.append(node('p','mi-note','這批樣本暫無符合的檔案。'));
-  for (const item of entries.slice(0,6)) {
-    const row = button('mi-profile','',() => openProfile(item.id));
+  const title = scope && scope !== '本次篩選' ? `${scope} · 待領養` : '待領養動物';
+  root.replaceChildren(node('h4', '', title));
+  const list = node('div', 'mi-sample-list');
+  if (!entries.length) list.append(node('p', 'mi-note', '這批篩選暫無符合的檔案。'));
+  for (const item of entries.slice(0, 6)) {
+    const row = button('mi-profile', '', () => openProfile(item.id));
     const copy = node('div');
-    copy.append(node('strong','',item.name || '未命名'),node('small','',[item.organisation,item.age_label].filter(Boolean).join(' · ')));
-    const arrow = node('span','','›'); arrow.setAttribute('aria-hidden','true');
-    row.append(copy,arrow);
+    copy.append(node('strong', '', item.name || '未命名'), node('small', '', [item.organisation, item.age_label].filter(Boolean).join(' · ')));
+    const arrow = node('span', '', '›'); arrow.setAttribute('aria-hidden', 'true');
+    row.append(copy, arrow);
     list.append(row);
   }
   root.append(list);
@@ -729,7 +1162,10 @@ export function mountInsights(root, {api, openProfile}) {
   const sheet = node('style'); sheet.textContent = styles;
   const screen = node('section','mobile-insights');
   const header = node('header','mi-header');
-  header.append(node('h2','','領養數據'),node('p','','按物種和機構查看公開名錄、個案和領養觀察。'));
+  const headerRow = node('div','mi-header-row');
+  const snapshotMeta = node('span','mi-snapshot-meta','');
+  headerRow.append(node('h2','','領養數據'),snapshotMeta);
+  header.append(headerRow);
   const tabs = node('nav','mi-tabs'); tabs.setAttribute('aria-label','數據圖表');
   const controls = node('div','mi-controls');
   const filters = node('div','mi-filters'); filters.setAttribute('aria-label','按物種篩選');
@@ -739,40 +1175,52 @@ export function mountInsights(root, {api, openProfile}) {
   screen.append(header,tabs,controls,content);
   root.replaceChildren(sheet,screen);
 
-  let current = 'map', species = '', organisation = '', centre = '', age = '', month = '', breed = '', request = 0, data, research;
+  let current = 'map', species = '', organisation = '', centre = '', age = '', month = '', breed = '', request = 0, data, research, activeMapCleanup = null;
   const options = new Map();
   const speciesButtons = new Map();
-  const researchTabs = new Set(['waiting','story','flow']);
-  for (const [id,label] of [['map','中心地圖'],['waiting','等待天數'],['story','領養故事'],['flow','生命流向'],['age','年齡分布'],['trend','領養趨勢']]) {
-    const tab = button('mi-tab',label,() => {
-      if (current === id) return;
-      const before = current;
-      current = id;
-      updateButtons();
-      if (organisation && (before === 'trend' || id === 'trend')) refresh();
-      else if (data) draw();
-    });
+  const researchTabs = new Set(['flow','guide']);
+  function showTab(id) {
+    if (current === id) return;
+    const previous = current;
+    current = id;
+    updateButtons();
+    if (organisation && (previous === 'trend' || id === 'trend')) refresh();
+    else if (data) draw();
+  }
+  for (const [id,label,short] of [['map','中心地圖','地圖'],['age','年齡分布','年齡'],['trend','領養趨勢','趨勢'],['flow','生命流向','流向'],['guide','資料解讀','解讀']]) {
+    const tab = button('mi-tab',short,() => showTab(id));
+    tab.setAttribute('aria-label', label);
+    tab.title = label;
     tab.setAttribute('aria-pressed',String(current === id));
     options.set(id,tab);
     tabs.append(tab);
   }
-  for (const [id,label] of [['','全部'],['cat','貓'],['dog','狗']]) {
-    const filter = button('mi-filter',label,() => {
+  const speciesSvgs = {
+    cat: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.2 3.4c-.5-.3-1.2.1-1.2.7v6.6C4 16 7.5 20 12 20s8-4 8-9.3V4.1c0-.6-.7-1-1.2-.7L15.1 6a9.6 9.6 0 0 0-6.2 0L5.2 3.4Z"/><circle cx="9.2" cy="12" r="1.25" fill="#fffdf9"/><circle cx="14.8" cy="12" r="1.25" fill="#fffdf9"/><path d="M12 14.8 10.7 13.5h2.6L12 14.8Z" fill="#fffdf9"/></svg>',
+    dog: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.6 5.4c-1.8.8-3 3.2-2.7 6.3.2 1.7 1.3 2.5 2.4 2.1.4-.1.7-.4.9-.8.6 3.9 3 6.5 5.8 6.5s5.2-2.6 5.8-6.5c.2.4.5.7.9.8 1.1.4 2.2-.4 2.4-2.1.3-3.1-.9-5.5-2.7-6.3-1-.4-2.1-.1-2.8.6a8.6 8.6 0 0 0-7.2 0c-.7-.7-1.8-1-2.8-.6Z"/><circle cx="9.5" cy="11.2" r="1.2" fill="#fffdf9"/><circle cx="14.5" cy="11.2" r="1.2" fill="#fffdf9"/><ellipse cx="12" cy="14.3" rx="1.8" ry="1.25" fill="#fffdf9"/></svg>',
+  };
+  for (const [id,label] of [['','全部'],['cat','貓咪'],['dog','狗狗']]) {
+    const filter = button('mi-filter',speciesSvgs[id] ? '' : label,() => {
       if (species === id) return;
       species = id;
       centre = ''; age = '';
       updateButtons();
       refresh();
     });
+    if (speciesSvgs[id]) {
+      filter.innerHTML = speciesSvgs[id];
+      filter.setAttribute('aria-label', label);
+      filter.title = label;
+    }
     filter.setAttribute('aria-pressed',String(species === id));
     speciesButtons.set(id,filter);
     filters.append(filter);
   }
 
   function updateButtons() {
+    orgSpace.hidden = current === 'trend';
     for (const [id,element] of options) element.setAttribute('aria-pressed',String(id === current));
     for (const [id,element] of speciesButtons) element.setAttribute('aria-pressed',String(id === species));
-    orgSpace.hidden = current === 'trend';
   }
 
   function stat(label, value) {
@@ -782,7 +1230,7 @@ export function mountInsights(root, {api, openProfile}) {
   }
 
   function drawResearch() {
-    const key = `${species}\n${organisation}`;
+    const key = species + '/' + organisation;
     if (research?.key !== key) research = {key};
     if (research.error) {
       const error = node('div','mi-load','暫時無法讀取此圖表的查核資料。');
@@ -808,20 +1256,27 @@ export function mountInsights(root, {api, openProfile}) {
       return;
     }
     const waiting = research.payload.waiting || {}, flow = research.payload.flow || {};
-    if (current === 'waiting') content.append(waitingChart(waiting));
-    if (current === 'story') content.append(scatterChart(waiting,openProfile));
-    if (current === 'flow') content.append(flowChart(flow,breed,value => { breed = value; }));
+    if (current === 'flow') content.append(flowChart(flow,waiting,breed,value => { breed = value; },openProfile));
+    if (current === 'guide') content.append(guidePanel(data,waiting,flow,openProfile));
+  }
+
+  function clearActiveMap() {
+    if (activeMapCleanup) {
+      activeMapCleanup();
+      activeMapCleanup = null;
+    }
   }
 
   function draw() {
+    clearActiveMap();
     orgSpace.replaceChildren(select('mi-select','按機構篩選',
       [['','全部機構'],...(data.organisations || []).map(item => [item.id,item.name])],organisation,value => {
         organisation = value;
         centre = ''; age = '';
         refresh();
       }));
-    orgSpace.firstElementChild.style.width = '100%';
     content.replaceChildren();
+    snapshotMeta.textContent = data.release_date ? `快照 ${data.release_date}` : '';
     if (researchTabs.has(current)) {
       drawResearch();
       return;
@@ -831,25 +1286,35 @@ export function mountInsights(root, {api, openProfile}) {
       return;
     }
     const summary = node('div','mi-summary');
-    summary.append(stat('官網明列待領養檔案',data.total),stat(current === 'map' ? '可標到地圖的檔案' : '年齡未明或跨組',
+    summary.append(stat('待領養檔案',data.total),stat(current === 'map' ? '有中心位置的檔案' : '年齡未明或跨組',
       current === 'map' ? data.map_coverage?.plotted_listings ?? data.total - data.unknown_centre - data.centre_unavailable_count :
         data.ages?.find(item => item.key === 'unknown')?.count));
     content.append(summary);
-    const snapshot = [data.release_date && `快照 ${data.release_date}`,data.older_count > 0 && `含 ${format(data.older_count)} 則沿用檔案`].filter(Boolean).join(' · ');
-    if (snapshot) content.append(node('p','mi-note',snapshot));
     const sample = node('section','mi-samples');
     const allListings = data.listings || [];
     let map;
     const updateSample = () => {
       const selected = current === 'map' ? centre : age;
+      if (current === 'map' && !selected) {
+        sample.hidden = true;
+        sample.replaceChildren();
+        return;
+      }
       const group = map?.shared.get(selected);
       const active = current === 'map' ? data.centres?.find(item => item.id === selected) : data.ages?.find(item => item.key === selected);
       const ids = group ? group.entries.map(item => item.id) : [selected];
       const entries = selected ? allListings.filter(item => ids.includes(current === 'map' ? item.centre_id : item.age_key)) : allListings;
-      listingSample(sample,entries,openProfile,group?.name || active?.name || active?.label || '本次篩選');
+      if (current === 'map' && !entries.length) {
+        sample.hidden = true;
+        sample.replaceChildren();
+        return;
+      }
+      sample.hidden = false;
+      listingSample(sample,entries,openProfile,group?.shortName || active?.short_name || active?.name || active?.label || '本次篩選');
     };
     if (current === 'map') {
-      map = centreMap(data,centre,id => { centre = centre === id ? '' : id; map.update(centre); updateSample(); });
+      map = centreMap(data,centre,id => { centre = centre === id ? '' : id; map.update(centre); updateSample(); },api,species);
+      activeMapCleanup = map.destroy;
       content.append(map.block);
     } else {
       const chart = ageChart(data,age,id => { age = age === id ? '' : id; chart.update(age); updateSample(); });
@@ -861,6 +1326,7 @@ export function mountInsights(root, {api, openProfile}) {
 
   async function refresh() {
     const token = ++request;
+    clearActiveMap();
     data = null;
     content.setAttribute('aria-busy','true');
     content.replaceChildren(node('p','mi-load','正在讀取資料…'));
@@ -880,5 +1346,8 @@ export function mountInsights(root, {api, openProfile}) {
   }
   updateButtons();
   refresh();
-  return () => { request++; research = undefined; };
+  return {
+    showMap() { showTab('map'); },
+    destroy() { request++; clearActiveMap(); research = undefined; },
+  };
 }
