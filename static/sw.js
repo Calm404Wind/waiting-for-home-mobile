@@ -1,10 +1,11 @@
 const CACHE_PREFIX = 'waiting-for-home-mobile-';
-const APP_CACHE = `${CACHE_PREFIX}v21`;
+const APP_CACHE = `${CACHE_PREFIX}v22`;
 const SHELL = ['/', '/manifest.webmanifest',
   '/static/app.css', '/static/mobile.js', '/static/swipe.js',
   '/static/insights.js', '/static/profile.js', '/static/icon-192.png', '/static/icon-512.png',
   '/static/icon-maskable-512.png', '/static/nav-icons.png', '/static/account.js', '/static/actions.js',
-  '/static/qr.js', '/static/learn.js'];
+  '/static/qr.js', '/static/learn.js', '/static/street-map.js', '/static/hk-aerial.js',
+  '/static/vendor/leaflet/leaflet.js', '/static/vendor/leaflet/leaflet.css', '/static/landsd-logo.jpg'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(APP_CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

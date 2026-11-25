@@ -18,7 +18,9 @@
 
 Compose 會啟動 MongoDB、匯入隨倉庫附上的兩期目錄，再啟動 FastAPI。照片程式會驗證每個壓縮檔的 SHA-256，並把檔案放到 `archive/`。只想核對資料與互動邏輯時，可先啟動 Compose，動物照片會在還原後供應。
 
-中心地圖預設使用隨專案附上的香港行政區界和中心座標，可直接點選。若要啟用 Google 街道地圖，可在專案根目錄的 `.env` 設定 `ADOPTION_GOOGLE_MAPS_BROWSER_KEY`，再執行 `docker compose up -d`。這是供瀏覽器使用的金鑰，請在 Google Cloud 限定允許的網站及 Maps JavaScript API。
+中心地圖預設以 OpenStreetMap 顯示街道、地名和領養中心，支援拖動、縮放、全螢幕及切換香港地政總署航拍底圖。選取中心後，可以查看領養名單，或用「附近街景」在 Google Maps 開啟該座標。上述操作均無需 API 金鑰。街道底圖無法載入時，畫面會提示並顯示行政區示意圖，按「重試街道圖」可重新載入。
+
+若要使用 AI Studio 版的 Google 街道圖、衛星圖與街景控制，在專案根目錄的 `.env` 設定 `ADOPTION_GOOGLE_MAPS_BROWSER_KEY`，再執行 `docker compose up -d`。從 AI Studio 匯入時也可沿用 `VITE_GOOGLE_MAPS_API_KEY`。兩者都有值時，優先使用 `ADOPTION_GOOGLE_MAPS_BROWSER_KEY`。請使用限定網站和 Maps JavaScript API 的瀏覽器金鑰。
 
 若本機已有可用的 MongoDB，也可直接啟動 Python 服務。
 

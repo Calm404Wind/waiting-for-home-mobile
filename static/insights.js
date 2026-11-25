@@ -72,6 +72,14 @@ const styles = `
 .mi-map-reset[hidden]{display:none}
 .mi-map-stage{position:relative;border-radius:.95rem;overflow:hidden;border:1px solid rgba(138,102,76,.18);background:#e8eaed;min-width:0}
 .mi-map-canvas{width:100%;height:340px;background:#e8eaed}
+.mi-map-stage{isolation:isolate}
+.mi-street-canvas{background:#e8efeb}
+.mi-map-loading{display:grid;place-content:center;font-size:.85rem;color:var(--mi-muted)}
+.mi-street-marker{border:0;background:none}
+.mi-map-expand{background:white;color:#422b21;border:1px solid #aaa;border-radius:4px;padding:6px 9px;min-height:32px;cursor:pointer}
+.mi-fullscreen-dialog:modal{inset:0;margin:0;padding:0;border:none;width:100%;max-width:none;height:100%;height:100dvh;max-height:none}
+.mi-fullscreen-dialog .mi-map-canvas{height:100%}
+.mi-map-retry{color:var(--mi-accent);background:transparent;border:0;text-decoration:underline;cursor:pointer}
 .mi-map-status{position:absolute;inset:0;display:grid;place-items:center;padding:1rem;text-align:center;font-size:.82rem;color:var(--mi-muted);background:rgba(255,253,248,.88);z-index:2}
 .mi-map-status[hidden]{display:none}
 .mi-pin{min-width:36px;min-height:36px;padding:2px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;position:relative;outline:none;pointer-events:auto;transition:opacity 160ms ease}
@@ -278,7 +286,9 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
   canvas.setAttribute('role', 'region');
   canvas.setAttribute('aria-label', '香港領養中心 Google Maps 互動地圖');
   const atlas = districtMap(data, points, onCentre);
-  stage.append(atlas.image);
+  const loading = node('div', 'mi-map-canvas mi-map-loading', '正在載入街道地圖…');
+  loading.setAttribute('role', 'status');
+  stage.append(loading);
   block.append(stage);
 
   const hint = node('p', 'mi-map-hint', '點選標記或選擇中心。灰點代表尚無可對應的檔案。');
@@ -288,7 +298,14 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
       ...centres.map(centre => [centre.id, centre.name + '（' + format(centre.count) + ' 則）'])], selectedCentre, onCentre);
   if (centres.length) block.append(choices);
   const boundarySource = source('行政區邊界來源 ↗', data.districts_source_url);
-  if (boundarySource) block.append(boundarySource);
+  if (boundarySource) {
+    boundarySource.hidden = true;
+    block.append(boundarySource);
+  }
+  const notice = node('p', 'mi-map-hint');
+  notice.setAttribute('role', 'status');
+  notice.hidden = true;
+  block.append(notice);
 
   const card = node('div', 'mi-centre-card');
   card.hidden = true;
@@ -298,12 +315,15 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
   const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   let selected = selectedCentre;
   let gmap = null;
+  let street = null;
+  let fallbackStarted = false;
   let LatLngBoundsCtor = null;
   let destroyed = false;
   const pinButtons = new Map();
   const markerInstances = new Map();
 
   function fitAllPoints() {
+    if (street) { street.fit(); return; }
     if (!gmap || !LatLngBoundsCtor) return;
     if (points.length >= 2) {
       const bounds = new LatLngBoundsCtor();
@@ -325,6 +345,7 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
   }
 
   function focusSelectedPoint(id) {
+    if (street) { street.focus(id); return; }
     if (!gmap || !id) return;
     const direct = points.find(p => p.id === id || p.entries.some(e => e.id === id));
     if (!direct) return;
@@ -340,6 +361,7 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
   }
 
   function syncMarkersSelection(id) {
+    street?.updateSelection(id);
     for (const [key, marker] of atlas.markers) {
       const active = key === id || shared.get(key)?.entries.some(entry => entry.id === id);
       marker.setAttribute('aria-pressed', String(Boolean(active)));
@@ -352,20 +374,64 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
     }
   }
 
-  function useAtlas() {
+  function clearGoogle() {
     for (const { marker } of markerInstances.values()) marker.map = null;
     markerInstances.clear();
     pinButtons.clear();
     gmap = null;
-    if (!destroyed) {
-      stage.replaceChildren(atlas.image);
-      if (boundarySource) boundarySource.hidden = false;
+  }
+  function makePin(point, activate) {
+    const countLabel = point.count ? `${format(point.count)} 則待領養檔案` : '暫無對應檔案';
+    const pin = button(`mi-pin${point.count ? '' : ' is-empty'}`, '', activate);
+    pin.setAttribute('aria-label', `${point.name}，${countLabel}`);
+    pin.setAttribute('aria-pressed', 'false');
+    const tag = node('span', 'mi-pin-tag', point.shortName);
+    tag.setAttribute('aria-hidden', 'true');
+    pin.append(tag, node('span', 'mi-pin-core', point.count ? format(point.count) : ''));
+    return pin;
+  }
+  function showNotice(text) {
+    notice.textContent = text;
+    notice.hidden = !text;
+  }
+  function useAtlas() {
+    if (destroyed) return;
+    street?.destroy();
+    street = null;
+    stage.replaceChildren(atlas.image);
+    if (boundarySource) boundarySource.hidden = false;
+    showNotice('街道圖暫時無法載入，現顯示行政區示意圖。');
+    notice.append(button('mi-map-retry', '重試街道圖', () => {
+      fallbackStarted = false;
+      useStreetMap();
+    }));
+    syncMarkersSelection(selected);
+  }
+  async function useStreetMap() {
+    if (destroyed || fallbackStarted) return;
+    fallbackStarted = true;
+    clearGoogle();
+    try {
+      const { createStreetMap } = await import('./street-map.js');
+      if (destroyed) return;
+      const streetCanvas = node('div', 'mi-map-canvas mi-street-canvas');
+      streetCanvas.setAttribute('role', 'region');
+      streetCanvas.setAttribute('aria-label', '香港領養中心互動街道地圖');
+      stage.replaceChildren(streetCanvas);
+      if (boundarySource) boundarySource.hidden = true;
+      showNotice('');
+      street = createStreetMap(streetCanvas, points, selected,
+        point => makePin(point, () => onCentre(point.id)), useAtlas, showNotice);
+    } catch {
+      useAtlas();
     }
   }
-  window.addEventListener('adoption-maps-unavailable', useAtlas);
+  window.addEventListener('adoption-maps-unavailable', useStreetMap);
+  const fallbackTimer = setTimeout(useStreetMap, 10000);
   loadGoogleMapsBundle(api)
     .then(bundle => {
-      if (destroyed || !bundle || mapsAuthFailed) return;
+      if (destroyed || fallbackStarted) return;
+      if (!bundle || mapsAuthFailed) return useStreetMap();
       const { Map: GoogleMap, AdvancedMarkerElement, LatLngBounds } = bundle;
       LatLngBoundsCtor = LatLngBounds;
       stage.replaceChildren(canvas);
@@ -381,7 +447,7 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
         zoomControl: true,
         streetViewControl: true,
         fullscreenControl: true,
-        gestureHandling: 'cooperative',
+        gestureHandling: 'greedy',
         clickableIcons: false,
         restriction: {
           latLngBounds: HK_MAX_BOUNDS,
@@ -391,7 +457,6 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
 
       for (const point of [...points].sort((a, b) => a.count - b.count)) {
         const [centre] = point.entries;
-        const countText = point.count ? format(point.count) : '';
         const countLabel = point.count ? `${format(point.count)} 則待領養檔案` : '暫無對應檔案';
         const baseZ = point.count ? 100 + point.count : 10;
 
@@ -404,14 +469,7 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
           onCentre(point.id);
         };
 
-        const pin = button(`mi-pin${point.count ? '' : ' is-empty'}`, '', activate);
-        pin.setAttribute('aria-label', `${point.name}，${countLabel}`);
-        pin.setAttribute('aria-pressed', 'false');
-
-        const core = node('span', 'mi-pin-core', countText);
-        const tag = node('span', 'mi-pin-tag', point.shortName);
-        tag.setAttribute('aria-hidden', 'true');
-        pin.append(tag, core);
+        const pin = makePin(point, activate);
 
         const marker = new AdvancedMarkerElement({
           map: gmap,
@@ -430,7 +488,8 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
       if (selected) focusSelectedPoint(selected);
       else fitAllPoints();
     })
-    .catch(useAtlas);
+    .catch(useStreetMap)
+    .finally(() => clearTimeout(fallbackTimer));
 
   function showCentre(id) {
     const centre = centres.find(item => item.id === id);
@@ -496,6 +555,10 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
     const links = node('div', 'mi-link-row');
     if (centre.count > 0 && reference) links.append(reference);
     if (coordinate && coordinate.href !== reference?.href) links.append(coordinate);
+    if (finite(centre.latitude) && finite(centre.longitude)) {
+      const viewpoint = encodeURIComponent(`${centre.latitude},${centre.longitude}`);
+      links.append(source('附近街景 ↗', `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${viewpoint}`));
+    }
     if (links.childElementCount) card.append(links);
   }
 
@@ -524,8 +587,10 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
 
   function destroy() {
     destroyed = true;
-    window.removeEventListener('adoption-maps-unavailable', useAtlas);
-    useAtlas();
+    clearTimeout(fallbackTimer);
+    window.removeEventListener('adoption-maps-unavailable', useStreetMap);
+    street?.destroy();
+    clearGoogle();
   }
 
   update(selectedCentre, { animate: false });

@@ -93,7 +93,8 @@ def overview():
 
 @app.get('/api/maps-config')
 def maps_config():
-    return {'apiKey': os.environ.get('ADOPTION_GOOGLE_MAPS_BROWSER_KEY', '')}
+    key = os.environ.get('ADOPTION_GOOGLE_MAPS_BROWSER_KEY', '').strip()
+    return {'apiKey': key or os.environ.get('VITE_GOOGLE_MAPS_API_KEY', '').strip()}
 
 
 @app.get('/api/listings')

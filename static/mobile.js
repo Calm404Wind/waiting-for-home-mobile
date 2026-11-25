@@ -1,5 +1,5 @@
 import { mountSwipe } from './swipe.js?v=21';
-import { mountInsights } from './insights.js?v=21';
+import { mountInsights } from './insights.js?v=22';
 import { openAnimal } from './profile.js?v=21';
 import { createAccount } from './account.js?v=21';
 import { openShare, startApplication } from './actions.js?v=21';
