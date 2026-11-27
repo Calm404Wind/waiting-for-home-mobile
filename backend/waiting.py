@@ -1,6 +1,9 @@
 import calendar
+import json
 import re
 from datetime import date
+from functools import lru_cache
+from pathlib import Path
 
 from .stories import source_paragraphs
 
@@ -54,10 +57,18 @@ def dated_event(sentence, stamp):
         return '官網記載的救援日期' if english[-1]['rescue'] else '官網記載的到達日期'
     chinese = ZH_EVENT.search(right[:95])
     if chinese and not UNRELATED.search(right[:chinese.start()]):
+        if re.search(r'發現|見到|聯絡', right[:chinese.start()]):
+            return '官網記載的救援行動起點'
         return '官網記載的救援日期' if chinese['rescue'] else '官網記載的收容日期'
     if re.search(r'(?:獲救|拯救|收容|入所)(?:日期|時間)?[：:\s於在]*$', left):
         return '官網記載的救援／收容日期'
     return None
+
+
+@lru_cache(maxsize=1)
+def reviewed_starts():
+    path = Path(__file__).with_name('data') / 'reviewed_waiting_starts.json'
+    return json.loads(path.read_text(encoding='utf-8'))
 
 
 def source_event(obs):
@@ -69,6 +80,16 @@ def source_event(obs):
             yield lo, hi, label, value.get('raw') or lo.isoformat()
     raw = obs.get('source_values_raw') or {}
     parts, _ = source_paragraphs(obs)
+    # A dated discovery and the related rescue may span several sentences.
+    # Use the reviewed passage only for the observation and page it came from.
+    review = reviewed_starts().get(obs['_id'])
+    if review and obs.get('source_url') == review['source_url']:
+        quote = review['evidence']
+        stamps = list(STAMP.finditer(quote))
+        if len(stamps) == 1 and any(quote in paragraph for paragraph in parts):
+            dates = bounds(stamps[0])
+            if dates:
+                yield *dates, review['basis'], quote
     if not parts or parts[-1].endswith(('…', '...')):
         parts = [*parts, raw.get('origin_raw'), raw.get('health_raw')]
     for part in filter(None, parts):

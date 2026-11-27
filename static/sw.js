@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'waiting-for-home-mobile-';
-const APP_CACHE = `${CACHE_PREFIX}v25`;
+const APP_CACHE = `${CACHE_PREFIX}v26`;
 // Let the access gateway handle every navigation and resource on test tunnels.
 // A cached shell can hide the login page when the group session expires.
 const isTestTunnel = self.location.hostname.endsWith('.trycloudflare.com');

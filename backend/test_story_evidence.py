@@ -2,7 +2,7 @@ import unittest
 
 from .live_story import allowed, extract
 from .stories import snapshot_story
-from .waiting import waiting_fields
+from .waiting import reviewed_starts, waiting_fields
 
 
 def observation(text, snapshot='2026-10-20', **extra):
@@ -34,6 +34,27 @@ class EvidenceTests(unittest.TestCase):
         result = waiting_fields(observation('First appointment on 2025-08-01; Rescued on 2025-07-14.'))
         self.assertEqual(result['intake_date'], '2025-07-14')
         self.assertNotIn('appointment', result['intake_evidence'])
+        report = waiting_fields(observation('2026年7月6號，我被發現，愛協督察隨即嚟救我走。'))
+        self.assertEqual(report['intake_basis'], '官網記載的救援行動起點')
+
+    def test_reviewed_discovery_and_rescue_share_one_source(self):
+        obs = {'_id': 'obs_20261123_spca_47d8869d6a8dc5', 'organisation_id': 'spca',
+               'snapshot_date': '2026-11-23',
+               'source_url': 'https://www.spca.org.hk/zh-hant/what-we-do/animals-for-adoption-details?code=541413'}
+        result = waiting_fields(obs)
+        self.assertEqual((result['intake_date'], result['wait_days']), ('2022-12-14', 1440))
+        self.assertEqual(result['intake_basis'], '官網記載的救援行動起點')
+        self.assertIn('先救出我哋', result['intake_evidence'])
+        self.assertIsNone(waiting_fields({**obs, 'source_url': 'https://example.org/another-animal'})['wait_days'])
+        self.assertIsNone(waiting_fields({**obs, '_id': 'a-different-observation'})['wait_days'])
+
+    def test_reviewed_month_keeps_original_precision(self):
+        key = 'obs_20261123_spca_216a61eaa1760d'
+        obs = {'_id': key, 'organisation_id': 'spca', 'snapshot_date': '2026-11-23',
+               'source_url': reviewed_starts()[key]['source_url']}
+        result = waiting_fields(obs)
+        self.assertEqual(result['intake_date'], '2026-08')
+        self.assertEqual((result['wait_days_min'], result['wait_days_max']), (84, 114))
 
     def test_source_fields_and_boilerplate(self):
         story = snapshot_story(observation('Rescued on 2024-09-19'))

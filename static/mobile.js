@@ -1,6 +1,6 @@
 import { mountSwipe } from './swipe.js?v=25';
-import { mountInsights } from './insights.js?v=25';
-import { openAnimal } from './profile.js?v=25';
+import { mountInsights } from './insights.js?v=26';
+import { openAnimal } from './profile.js?v=26';
 import { createAccount } from './account.js?v=21';
 import { openShare, startApplication } from './actions.js?v=24';
 import { mountArticles, openGuide } from './learn.js?v=25';

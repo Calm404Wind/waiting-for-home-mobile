@@ -118,14 +118,17 @@ const styles = `
 .mi-scatter-wrap{position:relative;min-width:0;background:#fffaf2;border:1px solid #f0e0ce;border-radius:.95rem;padding:.35rem .28rem .22rem;overflow:visible}
 .mi-scatter-wrap svg{display:block;width:100%;height:auto;overflow:visible;cursor:default}
 .mi-scatter-wrap text{font-size:10px;fill:#6b5a4c}
+.mi-select.mi-scatter-picker{display:block;width:100%;min-height:44px;margin-top:.65rem}
 .mi-scatter-lane{fill:rgba(236,216,194,.24)}
 .mi-scatter-axis{stroke:#cdb4a5;vector-effect:non-scaling-stroke}
 .mi-scatter-grid{stroke:#efe2d2;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
 .mi-scatter-xlabel{font-size:10.5px;font-weight:800;fill:#422b21}
 .mi-scatter-xsub{font-size:8.8px;fill:#7b6457}
 .mi-scatter-dot{cursor:pointer}
+.mi-scatter-dot .mi-dot-core,.mi-scatter-dot .mi-dot-halo{pointer-events:none}
 .mi-scatter-dot .mi-dot-core{transition:transform 150ms cubic-bezier(.16,1,.3,1),opacity 150ms ease}
-.mi-scatter-dot:hover .mi-dot-core,.mi-scatter-dot:focus-visible .mi-dot-core{transform:scale(1.22)}
+.mi-scatter-dot:focus-visible .mi-dot-core{transform:scale(1.22)}
+@media(hover:hover){.mi-scatter-dot:hover .mi-dot-core{transform:scale(1.22)}}
 .mi-scatter-dot:focus-visible,.mi-flow .mi-flow-node:focus-visible{outline:none;filter:drop-shadow(0 0 2px #513324)}
 .mi-scatter-tooltip{position:absolute;z-index:8;pointer-events:none;background:rgba(42,26,18,.95);color:#fffaf2;font-size:.76rem;font-weight:700;line-height:1.3;padding:.34rem .62rem;border-radius:.55rem;white-space:nowrap;box-shadow:0 8px 20px -6px rgba(34,18,10,.4);transform:translate(-50%,calc(-100% - 10px));transition:opacity 120ms ease}
 .mi-scatter-tooltip[hidden]{display:none}
@@ -724,6 +727,33 @@ function deterministicJitter(id) {
   return ((hash >>> 0) % 1000) / 1000 - 0.5;
 }
 
+// A point owns the part of its touch target closer to it than to any neighbour.
+// Coordinates are local to the point so the path works at every SVG scale.
+function scatterHitRegion(point, points) {
+  const reach = 18;
+  let polygon = [[-reach, -reach], [reach, -reach], [reach, reach], [-reach, reach]];
+  for (const other of points) {
+    if (other === point) continue;
+    const dx = other.x - point.x, dy = other.y - point.y;
+    const halfDistanceSquared = (dx * dx + dy * dy) / 2;
+    if (halfDistanceSquared >= reach * (Math.abs(dx) + Math.abs(dy))) continue;
+    const clipped = [];
+    for (let i = 0; i < polygon.length; i++) {
+      const [ax, ay] = polygon[i];
+      const [bx, by] = polygon[(i + 1) % polygon.length];
+      const a = ax * dx + ay * dy - halfDistanceSquared;
+      const b = bx * dx + by * dy - halfDistanceSquared;
+      if (a <= 0) clipped.push([ax, ay]);
+      if ((a < 0 && b > 0) || (a > 0 && b < 0)) {
+        const t = a / (a - b);
+        clipped.push([ax + t * (bx - ax), ay + t * (by - ay)]);
+      }
+    }
+    polygon = clipped;
+  }
+  return 'M' + polygon.map(([x, y]) => `${x.toFixed(3)},${y.toFixed(3)}`).join('L') + 'Z';
+}
+
 function openStorySheet(item, openProfile, api) {
   const sheet = node('dialog', 'mi-story-sheet');
   sheet.setAttribute('aria-label', `查看牠的故事：${item.name || '動物'}`);
@@ -869,7 +899,8 @@ function scatterChart(waiting, openProfile, api) {
   const yScale = days => bottom - ((bottom - top) * days) / maxDays;
   const bandIndex = band => AGE_BAND_COLUMNS.findIndex(col => col.key === band);
 
-  // Compute non-overlapping jittered positions within each age band column
+  // Preserve the exact wait on the y axis and use the age column's width to
+  // separate close dates. Choose the clearest slot when the column is crowded.
   const positioned = [];
   const laneBuckets = new Map([['young', []], ['adult', []], ['senior', []]]);
   for (const item of points) laneBuckets.get(item.age_band)?.push(item);
@@ -877,27 +908,24 @@ function scatterChart(waiting, openProfile, api) {
   for (const [band, group] of laneBuckets.entries()) {
     const colIdx = bandIndex(band);
     const centerX = left + laneW * (colIdx + 0.5);
-    const maxSpread = laneW * 0.34;
+    const maxSpread = Math.floor(laneW / 2 - 10);
     const sorted = [...group].sort((a, b) => b.wait_days - a.wait_days);
     const placed = [];
-    for (let i = 0; i < sorted.length; i++) {
-      const item = sorted[i];
+    for (const item of sorted) {
       const py = yScale(item.wait_days);
-      let px = centerX + deterministicJitter(item.id) * maxSpread * 2;
-      if (item.is_outlier) {
-        // Keep red outlier dots nicely spaced when multiple outliers share a band
-        const outlierSlot = placed.filter(p => p.item.is_outlier).length;
-        const offsets = [0, -24, 24, -14, 14];
-        px = centerX + (offsets[outlierSlot % offsets.length] || 0);
-      } else {
-        for (let attempt = 0; attempt < 6; attempt++) {
-          const clash = placed.some(p => Math.hypot(p.x - px, p.y - py) < (p.item.is_outlier ? 13 : 9));
-          if (!clash) break;
-          const nudge = (attempt % 2 === 0 ? 1 : -1) * (attempt + 1) * 7;
-          px = Math.max(centerX - maxSpread, Math.min(centerX + maxSpread, px + nudge));
+      const radius = item.is_outlier ? 7.6 : 4.5;
+      const preferred = deterministicJitter(item.id) * maxSpread * 2;
+      let bestGap = -Infinity, bestOffset = 0;
+      for (let offset = -maxSpread; offset <= maxSpread; offset++) {
+        const px = centerX + offset;
+        const gap = placed.reduce((minimum, p) =>
+          Math.min(minimum, Math.hypot(px - p.x, py - p.y) - radius - p.radius), 6);
+        if (gap > bestGap || (gap === bestGap && Math.abs(offset - preferred) < Math.abs(bestOffset - preferred))) {
+          bestGap = gap;
+          bestOffset = offset;
         }
       }
-      const entry = { item, x: px, y: py };
+      const entry = {item, x: centerX + bestOffset, y: py, radius};
       placed.push(entry);
       positioned.push(entry);
     }
@@ -973,11 +1001,22 @@ function scatterChart(waiting, openProfile, api) {
     else tooltip.hidden = true;
   }
 
+  function activate(entry, toggleTip = true) {
+    if (entry.item.is_outlier) {
+      hideTip(true);
+      openStorySheet(entry.item, openProfile, api);
+    } else {
+      pinned = toggleTip && pinned === entry ? null : entry;
+      hideTip();
+    }
+  }
+
   // Render normal points first, then red outlier points on top
   const ordered = [
     ...positioned.filter(p => !p.item.is_outlier),
     ...positioned.filter(p => p.item.is_outlier),
   ];
+  const entriesByMark = new Map();
 
   for (const entry of ordered) {
     const { item, x, y } = entry;
@@ -988,22 +1027,22 @@ function scatterChart(waiting, openProfile, api) {
 
     const mark = drawing('g', {
       class: `mi-scatter-dot${isOutlier ? ' is-outlier' : ''}`,
-      transform: `translate(${x.toFixed(1)} ${y.toFixed(1)})`,
+      transform: `translate(${x} ${y})`,
       role: 'button',
       tabindex: '0',
       'aria-label': label,
+      'data-listing-id': item.id,
       'data-outlier': String(isOutlier),
       'data-wait-days': String(item.wait_days),
     });
 
-    // Generous hit area
-    mark.append(drawing('circle', { r: isOutlier ? 15 : 11, fill: 'transparent' }));
+    mark.append(drawing('path', {d: scatterHitRegion(entry, positioned), fill: 'transparent'}));
 
     if (isOutlier) {
       mark.append(
         drawing('circle', { r: 12.5, fill: 'rgba(201, 59, 43, 0.16)', class: 'mi-dot-halo' }),
         drawing('circle', {
-          r: 7.6,
+          r: entry.radius,
           fill: '#c93b2b',
           stroke: '#fffdf8',
           'stroke-width': 2.1,
@@ -1013,7 +1052,7 @@ function scatterChart(waiting, openProfile, api) {
     } else {
       mark.append(
         drawing('circle', {
-          r: 4.5,
+          r: entry.radius,
           fill: '#b67855',
           'fill-opacity': 0.78,
           stroke: '#fffdf8',
@@ -1023,38 +1062,54 @@ function scatterChart(waiting, openProfile, api) {
       );
     }
 
-    mark.addEventListener('pointerenter', () => showTip(entry));
+    mark.addEventListener('pointerenter', event => {
+      if (event.pointerType !== 'touch') showTip(entry);
+    });
     mark.addEventListener('focus', () => showTip(entry));
     mark.addEventListener('pointerleave', () => hideTip(false));
     mark.addEventListener('blur', () => hideTip(false));
 
-    const activate = event => {
-      event?.stopPropagation?.();
-      if (isOutlier) {
-        hideTip(true);
-        openStorySheet(item, openProfile, api);
-      } else {
-        pinned = pinned === entry ? null : entry;
-        hideTip();
-      }
-    };
-    mark.addEventListener('click', activate);
     mark.addEventListener('keydown', event => {
       if (!['Enter', ' '].includes(event.key)) return;
       event.preventDefault();
-      activate(event);
+      activate(entry);
     });
 
+    entriesByMark.set(mark, entry);
     graph.append(mark);
   }
 
-  graph.addEventListener('click', () => hideTip(true));
+  // Mobile browsers can move a touch-generated click to the centre of a
+  // neighbouring button. The pointer's original contact coordinates stay exact.
+  let touchHit;
+  graph.addEventListener('pointerdown', () => { touchHit = undefined; });
+  graph.addEventListener('pointerup', event => {
+    if (event.isPrimary && event.pointerType === 'touch') {
+      touchHit = document.elementFromPoint(event.clientX, event.clientY)?.closest('.mi-scatter-dot') || null;
+    }
+  });
+  graph.addEventListener('click', event => {
+    const mark = event.detail && touchHit !== undefined ? touchHit : event.target.closest('.mi-scatter-dot');
+    touchHit = undefined;
+    const entry = entriesByMark.get(mark);
+    if (!entry) return hideTip(true);
+    mark.focus({preventScroll: true});
+    activate(entry);
+  });
   wrap.append(graph, tooltip);
-  block.append(wrap);
+  const pickerLabel = '按名稱選擇圖中個案';
+  const byName = [...points].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-HK', {numeric: true}));
+  const choices = byName.map(item => [item.id, `${item.name} · ${elapsedLabel(item)}${item.is_outlier ? ' · 查看故事' : ''}`]);
+  const picker = select('mi-select mi-scatter-picker', pickerLabel, [['', pickerLabel], ...choices], '', id => {
+    const entry = positioned.find(point => point.item.id === id);
+    if (entry) activate(entry, false);
+    picker.value = '';
+  });
+  block.append(wrap, picker);
 
   const missingDate = waiting.missing_start ?? 0;
   const missingAge = waiting.missing_age ?? 0;
-  block.append(node('p', 'mi-note', `本次可比較 ${format(points.length)} 則。另有 ${format(missingDate)} 則缺起算時間，${format(missingAge)} 則有起算時間但缺單一年齡組別。每點計至該檔案的快照日，僅記月份的個案按天數範圍中點排序。`));
+  block.append(node('p', 'mi-note', `本次可比較 ${format(points.length)} 則。另有 ${format(missingDate)} 則未有足夠起算依據，包括未記載日期、日期用途不明或紀錄互有矛盾。另有 ${format(missingAge)} 則有起算依據但缺單一年齡組別。每點計至該檔案的快照日，僅記月份的個案按天數範圍中點排序。`));
   return block;
 }
 

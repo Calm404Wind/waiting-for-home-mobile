@@ -357,19 +357,18 @@ function view(body, footer, item, onApply, fetchCurrentStory) {
   if (item.contact_url !== item.source_url) appendSource(urls, '聯絡機構 ↗', item.contact_url);
   const listed = ['listed', 'foster_option'].includes(item.status);
   const official = sourceUrl(item.official_action_url) || sourceUrl(item.source_url);
-  const contact = sourceUrl(item.contact_url);
-  if (listed && onApply && official) {
-    const apply = button('as-prepare', '準備申請領養', () => onApply(item, apply), '準備申請領養');
-    urls.append(apply);
-  }
   body.replaceChildren(gallery(item, name), summary, about, timeline(item));
   if (urls.childElementCount) {
     sourceFoot.append(element('span', '', '資料出處'), urls);
     body.append(sourceFoot);
   }
-  if (listed) {
-    const cta = link(contact ? '向機構查詢 ↗' : '查看官網領養檔案 ↗', contact || official, 'as-cta');
-    if (cta) { footer.replaceChildren(cta); footer.hidden = false; }
+  if (listed && official) {
+    const label = item.status === 'foster_option' ? '向中心查詢領養或暫養' : '向中心查詢';
+    const cta = onApply
+      ? button('as-cta', label, () => onApply(item, cta), label)
+      : link(label, official, 'as-cta');
+    footer.replaceChildren(cta);
+    footer.hidden = false;
   }
 
   const storyView = {

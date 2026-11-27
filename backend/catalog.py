@@ -44,6 +44,20 @@ def http_url(value):
     return value if parsed.scheme in {'http', 'https'} and parsed.netloc else None
 
 
+def public_contact_url(org):
+    official_types = {'機構官網', '机构官网', '機構中心官網', '机构中心官网'}
+    contacts = [row for row in org.get('public_contacts', [])
+                if row.get('source_type') in official_types and http_url(row.get('source_url'))]
+    if not contacts:
+        return http_url(org.get('website_url'))
+    # Both date-only and timestamp labels describe the same observation day.
+    # On that day retain the catalogue's first general contact ahead of a centre-specific entry.
+    def priority(row):
+        day = max((stamp[:10] for stamp in (row.get('observed_at_raw') or [])), default='')
+        return day, row['source_type'] in {'機構官網', '机构官网'}
+    return max(contacts, key=priority)['source_url']
+
+
 def date_label(raw, fallback):
     if raw and len(raw) > 19 and raw[10] == 'T' and raw.endswith('+08:00'):
         return f'{raw[:10]} {raw[11:16]}（香港）'
@@ -223,9 +237,6 @@ class Catalogue:
                                                 for row in media if http_url(row.get('source_photo_url'))]))
         male_female = {'male': '雄性', 'female': '雌性'}
         org = refs[1][latest['organisation_id']]
-        contacts = org.get('public_contacts', [])
-        contact = next((http_url(row.get('source_url')) for row in contacts
-                        if row.get('source_type', '').startswith('機構') and http_url(row.get('source_url'))), None)
         member_ids = self.db.listing_members.distinct('animal_id', {'listing_id': listing_id})
         members = [row['name'] for row in self.db.animals.find({'_id': {'$in': member_ids}}).sort('name', 1)]
         adoption = latest.get('adopted_at') or {}
@@ -235,7 +246,7 @@ class Catalogue:
         if decision in {'pending', 'conflict', 'source_key_collision'}:
             note = '來源身份仍有待核對的欄位，時間線只顯示已連到此檔案的觀察。'
         result.update(sex=male_female.get(latest.get('sex')), centre=result['centre_name'],
-                      contact_url=contact or http_url(org.get('website_url')),
+                      contact_url=public_contact_url(org),
                       centre_evidence_url=http_url(centre_evidence.get('location_reference_url')),
                       official_action_url=result['source_url'] if result['status'] in {'listed', 'foster_option'} else None,
                       photos=self.photos(photos[latest['_id']]), listing_url=http_url(latest.get('listing_url')),
