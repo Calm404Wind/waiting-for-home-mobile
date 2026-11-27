@@ -1,4 +1,5 @@
 import os
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Literal
@@ -36,8 +37,25 @@ async def lifespan(_app):
 
 app = FastAPI(title='等一個家｜手機 Demo', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(GZipMiddleware, minimum_size=1400)
-allowed_hosts = os.environ.get('ADOPTION_ALLOWED_HOSTS', '127.0.0.1,localhost')
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=[host.strip() for host in allowed_hosts.split(',') if host.strip()])
+
+
+def test_origin_host(origin):
+    if not origin:
+        return None
+    label = r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?'
+    tld = r'[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?'
+    match = re.fullmatch(rf'https://((?:{label}\.)+{tld})/?', origin.lower())
+    if not match or len(match[1]) > 253:
+        raise ValueError('ADOPTION_TEST_ORIGIN must be https:// followed by one exact DNS hostname')
+    return match[1]
+
+
+test_host = test_origin_host(os.environ.get('ADOPTION_TEST_ORIGIN', '').strip())
+configured_hosts = os.environ.get('ADOPTION_ALLOWED_HOSTS', '127.0.0.1,localhost')
+allowed_hosts = [host.strip() for host in configured_hosts.split(',') if host.strip()]
+if test_host:
+    allowed_hosts.append(test_host)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts, www_redirect=test_host is None)
 app.mount('/static', StaticFiles(directory=STATIC), name='static')
 app.include_router(accounts_router(catalogue))
 app.include_router(research_router(catalogue))
@@ -45,9 +63,18 @@ app.include_router(research_router(catalogue))
 
 @app.middleware('http')
 async def same_origin_writes(request, call_next):
+    # The tunnel terminates HTTPS and preserves the public Host. Its loopback
+    # upstream is plain HTTP; callers cannot select an origin via proxy headers.
+    host = request.headers.get('host', '').lower()
+    is_test_host = test_host is not None and host.partition(':')[0] == test_host
+    if is_test_host:
+        if host not in (test_host, f'{test_host}:443'):
+            return JSONResponse({'detail': 'Invalid host header'}, status_code=400)
+        request.scope['scheme'] = 'https'
     if request.method in {'POST', 'PUT', 'DELETE'}:
         origin = request.headers.get('origin')
-        if origin and origin != f'{request.url.scheme}://{request.url.netloc}':
+        expected_origin = f'https://{test_host}' if is_test_host else f'{request.url.scheme}://{request.url.netloc}'
+        if origin and origin != expected_origin:
             return JSONResponse({'detail': '請在《等一個家》Demo 內操作。'}, status_code=403)
     response = await call_next(request)
     if request.url.path.startswith(('/api/account', '/api/auth')):
@@ -109,6 +136,14 @@ def listings(species: Species = '', organisation_id: Annotated[str, Query(max_le
 @app.get('/api/listings/{listing_id}')
 def listing(listing_id: str):
     result = catalogue.detail(listing_id)
+    if result is None:
+        raise HTTPException(404, '找不到這則動物檔案。')
+    return result
+
+
+@app.get('/api/listings/{listing_id}/story')
+def listing_story(listing_id: str, refresh: bool = False):
+    result = catalogue.story(listing_id, refresh)
     if result is None:
         raise HTTPException(404, '找不到這則動物檔案。')
     return result

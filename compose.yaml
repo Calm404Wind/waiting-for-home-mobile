@@ -17,6 +17,7 @@ services:
         condition: service_healthy
     environment:
       ADOPTION_MONGO_URI: mongodb://mongo:27017
+      ADOPTION_TEST_ORIGIN: "${ADOPTION_TEST_ORIGIN:-}"
       ADOPTION_GOOGLE_MAPS_BROWSER_KEY: "${ADOPTION_GOOGLE_MAPS_BROWSER_KEY:-}"
       VITE_GOOGLE_MAPS_API_KEY: "${VITE_GOOGLE_MAPS_API_KEY:-}"
     ports:

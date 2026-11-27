@@ -444,7 +444,7 @@ async function savePoster({ name, facts, organisation, photo, code }, feedback) 
 export function openShare(item) {
   if (typeof item?.id !== 'string' || !/^listing_[\w-]{1,200}$/.test(item.id)) return false;
   const demoUrl = new URL('/', location.origin);
-  demoUrl.hash = `animal=${encodeURIComponent(item.id)}`;
+  demoUrl.searchParams.set('animal', item.id);
   const name = item.name || '名稱未公佈';
   const facts = [SPECIES[item.species], item.age_label, item.breed].filter(Boolean).join(' · ');
   const agency = item.organisation || '';

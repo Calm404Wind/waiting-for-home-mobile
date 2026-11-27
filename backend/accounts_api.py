@@ -168,7 +168,7 @@ def router(catalogue):
     @api.post('/auth/logout')
     def logout(request: Request, response: Response):
         revoke(request)
-        response.delete_cookie(COOKIE, httponly=True, samesite='strict')
+        response.delete_cookie(COOKIE, httponly=True, secure=request.url.scheme == 'https', samesite='strict')
         return expose(None)
 
     @api.put('/account/questionnaire')

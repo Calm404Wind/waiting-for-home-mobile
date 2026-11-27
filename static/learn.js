@@ -1,6 +1,7 @@
 const AFCD = 'https://www.pets.gov.hk/tc_chi/proper_care_of_pets/before_getting_a_pet.html';
 const PROCESS = 'https://www.spca.org.hk/adoption/adoption-services/adoption-process/';
-const CARE = 'https://www.pets.gov.hk/english/proper_care_of_pets/cats/proper-care.html';
+const CAT_CARE = 'https://www.pets.gov.hk/tc_chi/proper_care_of_pets/cats/proper-care.html';
+const DOG_CARE = 'https://www.pets.gov.hk/tc_chi/proper_care_of_pets/dogs/proper_care.html';
 const ADOPTION = 'https://pets.gov.hk/english/animal_health_and_welfare/adoption.html';
 
 const ARTWORKS = {
@@ -57,11 +58,11 @@ const articles = [
   {
     kicker: '居家安全',
     art: 'home',
-    title: '公契、家訪與窗網須知',
-    summary: '確認住處規定與門窗防護，安心迎接新成員。',
+    title: '公契、家訪與防護須知',
+    summary: '確認住處規定與門窗、散步準備，安心迎接貓狗新成員。',
     sections: [
       ['核對大廈公契與租約', '確認租約、公契及同住家人意願，並了解機構是否需查閱住址證明或安排家訪。'],
-      ['安裝穩固窗網與圍欄', '按機構規格檢查窗戶、露台及大門防護；若有原住寵物可預先準備隔離空間。'],
+      ['預備貓狗居家與外出裝備', '養貓須按機構規格安裝穩固窗網；養狗須備妥合適胸背帶、牽繩與每日散步時間，若有原住寵物可預留隔離空間。'],
     ],
     source: ['愛護動物協會｜領養程序 ↗', PROCESS],
   },
@@ -299,7 +300,7 @@ export function openGuide() {
     const steps = [
       ['01', '確認住處與共識', '查閱公契或租約，與家人確認照顧分工與預算。'],
       ['02', '篩選公開名錄', '滑動瀏覽貓狗檔案，核對官網連結與觀察紀錄。'],
-      ['03', '預約見面與家訪', '填交申請、親身互動，並按要求備妥窗網防護。'],
+      ['03', '預約見面與家訪', '填交申請、親身互動，按貓狗需要備妥窗網防護、牽引或居家空間。'],
       ['04', '辦理手續回家', '完成審核後接回新成員，預留首兩週安靜適應。'],
     ];
     for (const [num, title, copy] of steps) {
@@ -310,6 +311,11 @@ export function openGuide() {
       card.append(badge, content);
       stepsWrap.append(card);
     }
-    body.append(stepsWrap, source('機構領養程序示例 ↗', PROCESS), source('貓隻照顧指南 ↗', CARE));
+    body.append(
+      stepsWrap,
+      source('機構領養程序示例 ↗', PROCESS),
+      source('貓隻照顧指南 ↗', CAT_CARE),
+      source('狗隻照顧指南 ↗', DOG_CARE),
+    );
   });
 }

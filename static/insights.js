@@ -1,3 +1,5 @@
+import { elapsedLabel, elapsedSummary } from './wait-labels.js';
+
 const SVG = 'http://www.w3.org/2000/svg';
 const numberFormat = new Intl.NumberFormat('zh-HK');
 
@@ -113,7 +115,48 @@ const styles = `
 .mi-plot{min-width:0;background:#fffaf2;border:1px solid #f0e0ce;border-radius:.95rem;overflow:hidden}.mi-plot text{font-size:10px;fill:#6b5a4c}.mi-gridline{stroke:#ecdecd;vector-effect:non-scaling-stroke}.mi-series{fill:none;stroke-width:2.35;vector-effect:non-scaling-stroke}.mi-active-line{stroke:#be8a70;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}.mi-plot svg{cursor:crosshair}.mi-legend{display:flex;gap:.9rem;color:#624e3e;font-size:.8rem;font-weight:500}.mi-legend i{display:inline-block;width:.65rem;height:.65rem;border-radius:50%;margin-inline-end:.35rem}.mi-month-controls{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}.mi-month-controls .mi-select{border-radius:.82rem}.mi-month-summary{font-size:.85rem;font-weight:700;color:#6a3928;font-variant-numeric:tabular-nums}.mi-table summary{cursor:pointer;color:#784830;font-size:.82rem;font-weight:600;min-height:44px;display:list-item;padding-top:.65rem}.mi-table table{width:100%;border-collapse:collapse;font-size:.79rem;color:#564841;font-variant-numeric:tabular-nums}.mi-table :is(td,th){text-align:left;border-top:1px solid var(--mi-border);padding:.44rem .22rem}.mi-table :is(td,th):not(:first-child){text-align:right}
 .mi-samples h4{font-size:1.02rem}.mi-sample-list{display:grid;border-top:1px solid #efe0ce}.mi-profile{width:100%;min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:.65rem;text-align:left;background:transparent;border:0;border-bottom:1px solid #efe0ce;padding:.52rem .25rem;cursor:pointer;transition:background-color 150ms ease,padding-inline 150ms ease}.mi-profile:hover{background:#fff5e8;padding-inline:.45rem;border-radius:.55rem}.mi-profile div{display:grid;gap:.12rem;min-width:0;overflow-wrap:anywhere}.mi-profile strong{font-size:.86rem}.mi-profile small{font-size:.74rem;color:var(--mi-muted)}.mi-profile>span{font-size:1.1rem;color:#a04423}
 .mi-callout{display:grid;gap:.4rem;padding:.85rem .95rem;background:#fffaf2;border:1px solid rgba(138,102,76,.16);border-radius:.95rem;color:#67483c;font-size:.84rem;line-height:1.58}.mi-callout h4,.mi-callout p{margin:0}.mi-callout h4{font-size:.92rem;color:var(--mi-ink)}.mi-wait-bar:hover,.mi-wait-bar:focus-visible{background:#fff1e0;border-color:#e8be9e}.mi-wait-bar[aria-pressed=true] .mi-age-track i,.mi-wait-bar:hover .mi-age-track i,.mi-wait-bar:focus-visible .mi-age-track i{background:#a04423}.mi-wait-reading{min-height:2.1rem;margin:0;color:#734424;font-size:.82rem;font-weight:500}
-.mi-scatter .mi-axis{stroke:#cdb4a5;vector-effect:non-scaling-stroke}.mi-scatter .mi-point{cursor:pointer}.mi-scatter .mi-point:focus-visible,.mi-flow .mi-flow-node:focus-visible{outline:none;filter:drop-shadow(0 0 2px #513324)}.mi-scatter-choices{width:100%}.mi-story-card{display:grid;gap:.55rem;padding:.8rem;background:#fffaf2;border:1px solid rgba(138,102,76,.16);border-radius:.95rem}.mi-story-card img{width:100%;max-height:10rem;object-fit:cover;border-radius:.7rem}.mi-story-card h4,.mi-story-card p{margin:0}.mi-story-events{display:grid;gap:.35rem;margin:.1rem 0;padding:0;list-style:none;font-size:.79rem}.mi-story-events li{display:flex;justify-content:space-between;gap:.35rem}.mi-story-events time{font-variant-numeric:tabular-nums;white-space:nowrap}.mi-story-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(100%,32rem);max-height:85dvh;overflow:auto;padding:1.15rem max(1.05rem,env(safe-area-inset-right)) max(1.15rem,env(safe-area-inset-bottom)) max(1.05rem,env(safe-area-inset-left));border:1px solid #ebccb3;border-radius:1.45rem 1.45rem 0 0;background:#fffaf3;color:#422b21;box-shadow:0 -.4rem 2.2rem rgba(42,24,14,.26)}.mi-story-sheet::backdrop{background:rgba(42,24,14,.5);backdrop-filter:blur(5px)}.mi-story-sheet header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.75rem}.mi-story-sheet header h3{font-family:var(--app-display,'Noto Serif TC',Georgia,serif);font-size:1.22rem;margin:0}.mi-story-sheet .mi-filter{font:inherit;background:transparent;border:1px solid rgba(138,102,76,.26);border-radius:10px;margin:.28rem 0;min-height:40px;color:#422b21;padding:0 .8rem}.mi-story-sheet .mi-story-action{background:linear-gradient(135deg,#e27832 0%,#c8581d 100%);border:0;border-radius:14px;color:#fff;width:100%;min-height:46px;font-weight:800}
+.mi-scatter-wrap{position:relative;min-width:0;background:#fffaf2;border:1px solid #f0e0ce;border-radius:.95rem;padding:.35rem .28rem .22rem;overflow:visible}
+.mi-scatter-wrap svg{display:block;width:100%;height:auto;overflow:visible;cursor:default}
+.mi-scatter-wrap text{font-size:10px;fill:#6b5a4c}
+.mi-scatter-lane{fill:rgba(236,216,194,.24)}
+.mi-scatter-axis{stroke:#cdb4a5;vector-effect:non-scaling-stroke}
+.mi-scatter-grid{stroke:#efe2d2;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+.mi-scatter-xlabel{font-size:10.5px;font-weight:800;fill:#422b21}
+.mi-scatter-xsub{font-size:8.8px;fill:#7b6457}
+.mi-scatter-dot{cursor:pointer}
+.mi-scatter-dot .mi-dot-core{transition:transform 150ms cubic-bezier(.16,1,.3,1),opacity 150ms ease}
+.mi-scatter-dot:hover .mi-dot-core,.mi-scatter-dot:focus-visible .mi-dot-core{transform:scale(1.22)}
+.mi-scatter-dot:focus-visible,.mi-flow .mi-flow-node:focus-visible{outline:none;filter:drop-shadow(0 0 2px #513324)}
+.mi-scatter-tooltip{position:absolute;z-index:8;pointer-events:none;background:rgba(42,26,18,.95);color:#fffaf2;font-size:.76rem;font-weight:700;line-height:1.3;padding:.34rem .62rem;border-radius:.55rem;white-space:nowrap;box-shadow:0 8px 20px -6px rgba(34,18,10,.4);transform:translate(-50%,calc(-100% - 10px));transition:opacity 120ms ease}
+.mi-scatter-tooltip[hidden]{display:none}
+.mi-scatter-legend{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.3rem .65rem;font-size:.74rem;color:#624e3e;font-weight:600}
+.mi-scatter-legend span{display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
+.mi-scatter-legend i{display:inline-block;border-radius:50%;flex-shrink:0}
+.mi-scatter-legend .is-normal{width:8.5px;height:8.5px;background:#b67855}
+.mi-scatter-legend .is-outlier{width:12px;height:12px;background:#c93b2b;box-shadow:0 0 0 3px rgba(201,59,43,.18)}
+.mi-story-card{display:grid;gap:.68rem;padding:.15rem 0 0;background:transparent;border:0;border-radius:0}
+.mi-story-card img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:center 30%;border-radius:.95rem;background:#f2e2d2;display:block}
+.mi-story-head{display:grid;gap:.2rem}
+.mi-story-card h4,.mi-story-card p{margin:0}
+.mi-story-card h4{font-family:var(--app-display,'Noto Serif TC',Georgia,serif);font-size:1.34rem;font-weight:900;color:#3d261b;line-height:1.2}
+.mi-story-meta{font-size:.82rem;color:var(--mi-muted);line-height:1.45}
+.mi-story-wait{display:inline-flex;align-items:center;gap:.4rem;width:fit-content;padding:.32rem .68rem;border-radius:.62rem;background:#fdf0ed;border:1px solid rgba(201,59,43,.24);color:#b02c1e;font-size:.82rem;font-weight:800;font-variant-numeric:tabular-nums}
+.mi-story-text{display:grid;gap:.55rem;padding:.78rem .88rem;border-radius:.9rem;background:#fffdf9;border:1px solid rgba(138,102,76,.16);font-size:.87rem;line-height:1.7;color:#422b21}
+.mi-story-text small{font-size:.76rem;color:var(--mi-muted)}
+.mi-story-events{display:grid;gap:.35rem;margin:.1rem 0;padding:.65rem .8rem;list-style:none;font-size:.79rem;border-radius:.85rem;background:#fff7ec;border:1px solid rgba(138,102,76,.14)}
+.mi-story-events li{display:flex;justify-content:space-between;gap:.35rem}
+.mi-story-events time{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+.mi-story-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:min(100%,393px);max-height:84dvh;overflow:auto;padding:.65rem 1.05rem max(1.15rem,env(safe-area-inset-bottom));border:1px solid #ebccb3;border-bottom:0;border-radius:1.45rem 1.45rem 0 0;background:#fffaf3;color:#422b21;box-shadow:0 -.6rem 2.4rem rgba(42,24,14,.3);animation:miSheetUp 220ms cubic-bezier(.16,1,.3,1)}
+@media (min-width:540px){.mi-story-sheet{bottom:max(24px,calc((100dvh - 812px)/2));width:min(393px,calc(100vw - 48px));max-height:min(700px,calc(100dvh - 110px));border-bottom:1px solid #ebccb3;border-radius:1.5rem 1.5rem 2.35rem 2.35rem}}
+@keyframes miSheetUp{from{transform:translateY(28px);opacity:.6}to{transform:translateY(0);opacity:1}}
+.mi-story-sheet::backdrop{background:rgba(42,24,14,.52);backdrop-filter:blur(5px)}
+.mi-story-handle{width:38px;height:4px;border-radius:999px;background:rgba(138,102,76,.32);margin:0 auto .65rem}
+.mi-story-sheet header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.7rem}
+.mi-story-sheet header h3{font-family:var(--app-display,'Noto Serif TC',Georgia,serif);font-size:1.18rem;font-weight:900;margin:0}
+.mi-story-close{border:0;background:transparent;color:#725c4e;font-size:.84rem;font-weight:700;min-height:36px;padding:0 .35rem;cursor:pointer}
+.mi-story-close:hover{color:#9c421f}
+.mi-story-sheet .mi-story-action{background:linear-gradient(135deg,#e27832 0%,#c8581d 100%);border:0;border-radius:14px;color:#fff;width:100%;min-height:48px;font-size:.92rem;font-weight:800;margin-top:.2rem;cursor:pointer;box-shadow:0 10px 20px -8px rgba(175,72,20,.46)}
+.mi-story-sheet .mi-story-action:hover{filter:brightness(1.04)}
 .mi-flow .mi-flow-node{cursor:pointer}.mi-flow .mi-flow-node text{font-size:10px;font-weight:700;paint-order:stroke;stroke:#fffaf2;stroke-width:3.5px;stroke-linejoin:round}.mi-flow .mi-flow-node:focus-visible rect,.mi-flow .mi-flow-node[aria-pressed=true] rect{stroke:#a04423;stroke-width:2}.mi-flow .mi-stage-label{font-size:9.5px;font-weight:800;fill:#654636}.mi-flow .mi-flow-ribbon{pointer-events:none;transition:opacity .16s}.mi-flow-controls{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}.mi-flow-controls label{font-size:.82rem;font-weight:700}.mi-flow-detail,.mi-flow-range{font-size:.79rem;color:var(--mi-muted);min-height:.9rem;line-height:1.5}.mi-flow-table td:nth-child(2),.mi-flow-table th:nth-child(2){text-align:left}.mi-flow-reset{border:0;background:transparent;color:#9c421f;text-decoration:underline;text-underline-offset:3px;padding:0 .25rem}.mi-flow-reset[hidden]{display:none}
 .mi-takeaway{display:grid;gap:.3rem;padding:.78rem .92rem;border-radius:.95rem;background:#fffaf2;border:1px solid rgba(138,102,76,.16);color:#422b21}
 .mi-takeaway-kicker{font-size:.72rem;font-weight:800;letter-spacing:.05em;color:#a04423}
@@ -131,7 +174,7 @@ const styles = `
 .mi-guide-card{display:grid;gap:.35rem;padding:.85rem .95rem;border-radius:.95rem;background:#fffdf9;border:1px solid rgba(138,102,76,.15)}
 .mi-guide-card h4{margin:0;font-size:.92rem;font-weight:800;color:#422b21}
 .mi-guide-card p{margin:0;font-size:.82rem;line-height:1.58;color:#5d473b}
-.mi-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0}
+.mi-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
 .mi-tab{min-width:0;padding-inline:.12rem;min-height:44px}
 .mi-map-stage .mi-atlas{display:block;width:100%;height:auto;background:#e9f1ed}
 .mi-atlas .mi-terrain{fill:#fff8e8;stroke:#b6c3b4;stroke-width:.7;vector-effect:non-scaling-stroke}
@@ -253,7 +296,7 @@ function districtMap(data, points, onCentre) {
   return {image, markers};
 }
 
-function centreMap(data, selectedCentre, onCentre, api, species) {
+function centreMap(data, selectedCentre, onCentre, api, species, viewListings) {
   const block = node('section', 'mi-panel');
   const centres = data.centres || [];
   const located = centres.filter(item => finite(item.longitude) && finite(item.latitude));
@@ -539,12 +582,14 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${centre.latitude},${centre.longitude}`)}`
       : centre.coordinate_source_url;
     const coordinate = source('Google Maps ↗', gmapsUrl);
+    const links = node('div', 'mi-link-row');
     if (centre.count > 0) {
+      card.append(button('mi-primary-cta', '查看中心檔案', viewListings));
       const query = new URLSearchParams({ centre_id: centre.id });
       if (species) query.set('species', species);
-      const listings = node('a', 'mi-primary-cta', `查看全部 ${format(centre.count)} 則檔案`);
+      const listings = node('a', '', `在探索查看全部 ${format(centre.count)} 則檔案`);
       listings.href = '#discover?' + query;
-      card.append(listings);
+      links.append(listings);
     } else if (reference) {
       const primaryRef = source('前往機構官網查詢 ↗', centre.source_url);
       if (primaryRef) {
@@ -552,7 +597,6 @@ function centreMap(data, selectedCentre, onCentre, api, species) {
         card.append(primaryRef);
       }
     }
-    const links = node('div', 'mi-link-row');
     if (centre.count > 0 && reference) links.append(reference);
     if (coordinate && coordinate.href !== reference?.href) links.append(coordinate);
     if (finite(centre.latitude) && finite(centre.longitude)) {
@@ -609,14 +653,15 @@ function ageChart(data, selectedAge, onAge) {
   const block = panel('年齡分布','點選年齡組篩選下方動物');
   const rows = node('div','mi-age-list');
   const ages = data.ages || [];
-  const known = ages.filter(item => item.key !== 'unknown' && finite(item.count) && item.count > 0);
+  const known = ages.filter(item => ['young','adult','senior'].includes(item.key) && finite(item.count) && item.count > 0);
   const unknown = ages.find(item => item.key === 'unknown')?.count || 0;
+  const grouped = ages.find(item => item.key === 'group')?.count || 0;
   const totalCount = data.total || ages.reduce((sum, item) => sum + (item.count || 0), 0);
   if (known.length) {
     const topAge = known.reduce((best, item) => item.count > best.count ? item : best, known[0]);
     const pct = totalCount ? Math.round((topAge.count / totalCount) * 100) : 0;
-    const lead = `已標註年齡的檔案中，以「${topAge.label}」最多（${format(topAge.count)} 則，佔 ${pct}%）`;
-    const sub = unknown > 0 ? `另有 ${format(unknown)} 則官網未明示年齡或跨年齡組。` : '';
+    const lead = `在單一年齡組別中，以「${topAge.label}」最多（${format(topAge.count)} 則，佔全部待領養檔案 ${pct}%）`;
+    const sub = [unknown ? `${format(unknown)} 則年齡未明或跨組` : '', grouped ? `${format(grouped)} 則為成對或多隻檔案` : ''].filter(Boolean).join('，');
     block.append(takeawayBanner('重點結論', lead, sub));
   }
   const maximum = Math.max(1,...ages.map(item => item.count || 0));
@@ -663,165 +708,353 @@ function imageAsset(value, alt) {
   }
 }
 
-function waitCoverage(waiting) {
-  const detail = [];
-  if (finite(waiting.valid_count)) detail.push(`可核對等待天數：${format(waiting.valid_count)} 則`);
-  if (finite(waiting.missing_start)) detail.push(`缺有效起算日：${format(waiting.missing_start)} 則`);
-  return detail.join(' · ');
+const AGE_BAND_COLUMNS = [
+  { key: 'young', label: '幼年', sub: '<1歲' },
+  { key: 'adult', label: '成年', sub: '1至未滿7歲' },
+  { key: 'senior', label: '老年', sub: '≥7歲' },
+];
+
+function deterministicJitter(id) {
+  let hash = 2166136261;
+  const text = String(id || '');
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return ((hash >>> 0) % 1000) / 1000 - 0.5;
 }
 
-function waitingChart(waiting) {
-  const statistic = waiting.statistic_label || '等待天數';
-  const block = panel('等待天數',`各品種${statistic}`);
-  const coverage = waitCoverage(waiting);
-  if (coverage) block.append(node('p','mi-note',coverage));
-  const groups = (waiting.groups || []).filter(group => supportedDuration(group.value) && group.label);
-  if (!groups.length) {
-    const gap = node('div','mi-callout');
-    gap.append(node('h4','','這個篩選範圍暫無可計算的等待天數'),
-      node('p','','等待天數需要機構提供可核對的開放領養或起算日期。兩次官網快照只記錄當天觀察到的狀態。'));
-    block.append(gap);
-    return block;
-  }
-  const list = node('div','mi-age-list');
-  const reading = node('p','mi-wait-reading');
-  reading.setAttribute('aria-live','polite');
-  const max = Math.max(1,...groups.map(group => group.value));
-  const rows = new Map();
-  let selected, pointer;
+function openStorySheet(item, openProfile, api) {
+  const sheet = node('dialog', 'mi-story-sheet');
+  sheet.setAttribute('aria-label', `查看牠的故事：${item.name || '動物'}`);
+  const handle = node('div', 'mi-story-handle');
+  handle.setAttribute('aria-hidden', 'true');
+  const header = node('header');
+  const closeBtn = button('mi-story-close', '關閉', () => sheet.close());
+  closeBtn.setAttribute('aria-label', '關閉故事面板');
+  header.append(node('h3', '', '查看牠的故事'), closeBtn);
 
-  function update() {
-    const active = pointer ?? selected;
-    for (const [index, bar] of rows) bar.setAttribute('aria-pressed',String(index === selected));
-    const group = groups[active];
-    reading.textContent = group ? `${group.label}：${format(group.value)} 天${finite(group.count) ? ` · ${format(group.count)} 則樣本` : ''}` : '點選柱形查看分組天數。';
-  }
-
-  for (const [index, group] of groups.entries()) {
-    const bar = button('mi-age mi-wait-bar','',() => { selected = selected === index ? undefined : index; update(); });
-    bar.setAttribute('aria-label',`${group.label}，${format(group.value)} 天`);
-    const legend = node('span','mi-age-row');
-    legend.append(node('span','',group.label),node('strong','',`${format(group.value)} 天`));
-    const track = node('span','mi-age-track');
-    track.setAttribute('aria-hidden','true');
-    const fill = node('i');
-    fill.style.setProperty('--mi-bar',`${group.value * 100 / max}%`);
-    track.append(fill);
-    bar.append(legend,track);
-    for (const type of ['pointerenter','focus']) bar.addEventListener(type,() => { pointer = index; update(); });
-    for (const type of ['pointerleave','blur']) bar.addEventListener(type,() => { if (pointer === index) pointer = undefined; update(); });
-    rows.set(index,bar);
-    list.append(bar);
-  }
-  update();
-  block.append(list,reading);
-  return block;
-}
-
-function storyBody(item, openProfile, action = '查看這隻動物的完整檔案') {
-  const card = node('article','mi-story-card');
+  const card = node('article', 'mi-story-card');
   const name = item.name || '動物個案';
-  const image = imageAsset(item.photo_url,name);
+  const image = imageAsset(item.photo_url, name);
   if (image) card.append(image);
-  card.append(node('h4','',name));
-  if (supportedDuration(item.wait_days)) card.append(node('p','',`可核對等待 ${format(item.wait_days)} 天`));
+
+  const head = node('div', 'mi-story-head');
+  head.append(node('h4', '', name));
+  const speciesWord = item.species === 'cat' ? '貓' : item.species === 'dog' ? '狗' : '';
+  const metaText = [speciesWord, item.age_label, item.breed, item.organisation].filter(Boolean).join(' · ');
+  if (metaText) head.append(node('p', 'mi-story-meta', metaText));
+  card.append(head);
+
+  const elapsed = elapsedSummary(item);
+  if (elapsed) card.append(node('p', 'mi-story-wait', elapsed));
+  if (item.intake_evidence) {
+    const evidence = node('details', 'mi-table');
+    evidence.append(node('summary', '', '查看起算時間的機構原文'), node('p', '', item.intake_evidence));
+    card.append(evidence);
+  }
+
+  const storyBox = node('div', 'mi-story-text');
+  if (item.description) {
+    storyBox.append(node('p', '', item.description));
+  }
+  const loadingNote = node('small', '', api ? '正在讀取機構介紹…' : '');
+  if (!loadingNote.textContent) loadingNote.hidden = true;
+  storyBox.append(loadingNote);
+  card.append(storyBox);
+
+  const reference = node('div', 'mi-link-row');
+  const original = source('查看機構原始檔案 ↗', item.source_url);
+  if (original) reference.append(original);
+  card.append(reference);
   const events = (item.observations || []).filter(event => event.date && event.status_label);
   if (events.length) {
-    const list = node('ol','mi-story-events');
+    const list = node('ol', 'mi-story-events');
     for (const event of events) {
       const row = node('li');
-      const date = node('time','',event.date);
+      const date = node('time', '', event.date);
       date.dateTime = event.date;
-      row.append(date,node('span','',event.status_label));
+      row.append(date, node('span', '', event.status_label));
       list.append(row);
     }
     card.append(list);
   }
-  if (item.id) card.append(button('mi-filter mi-story-action',action,() => openProfile(item.id)));
-  return card;
-}
 
-function openStorySheet(item, openProfile) {
-  const sheet = node('dialog','mi-story-sheet');
-  sheet.setAttribute('aria-label',`${item.name || '動物'}的領養故事`);
-  const header = node('header');
-  header.append(node('h3','','領養故事'),button('mi-filter','關閉',() => sheet.close()));
-  sheet.append(header,storyBody(item,id => { sheet.close(); openProfile(id); }));
-  sheet.addEventListener('close',() => sheet.remove(),{once:true});
+  if (item.id) {
+    card.append(button('mi-story-action', '查看完整檔案', () => {
+      sheet.close();
+      openProfile(item.id);
+    }));
+  }
+
+  sheet.append(handle, header, card);
+  sheet.addEventListener('click', event => {
+    if (event.target === sheet) sheet.close();
+  });
+  sheet.addEventListener('close', () => sheet.remove(), { once: true });
   document.body.append(sheet);
   sheet.showModal();
+
+  if (api && item.id) {
+    api.get(`/api/listings/${encodeURIComponent(item.id)}/story`)
+      .then(story => {
+        if (!sheet.open) return;
+        const storySource = story?.source_url !== item.source_url ? source('查看機構原始檔案 ↗', story?.source_url) : null;
+        if (storySource) reference.replaceChildren(storySource);
+        const paragraphs = Array.isArray(story?.paragraphs)
+          ? story.paragraphs
+          : (item.description ? [item.description] : []);
+        storyBox.replaceChildren();
+        if (paragraphs.length) {
+          for (const text of paragraphs) storyBox.append(node('p', '', text));
+        } else {
+          storyBox.append(node('small', '', '已收錄的資料未附文字介紹。'));
+        }
+      })
+      .catch(() => {
+        if (!sheet.open) return;
+        loadingNote.hidden = true;
+        if (!item.description) {
+          storyBox.replaceChildren(node('small', '', '暫時未能讀取機構介紹。'));
+        }
+      });
+  }
 }
 
-function scatterChart(waiting, openProfile) {
-  const block = panel('領養故事','點選圓點查看長候個案');
-  const points = (waiting.points || []).filter(item => item.id && supportedDuration(item.wait_days) && supportedDuration(item.age_years));
+function scatterChart(waiting, openProfile, api) {
+  const block = panel('異常等待', '按年齡組別比較有記錄的等候時間，點選紅點查看故事');
+  const points = (waiting.points || []).filter(
+    item => item.id && supportedDuration(item.wait_days) && ['young', 'adult', 'senior'].includes(item.age_band),
+  );
   if (!points.length) {
-    const notice = node('div','mi-callout');
-    notice.append(node('h4','','等待散點圖目前缺乏可核對數據'),
-      node('p','','等待天數和年齡須在同一檔案都有記錄。空白欄位會保留，等機構補充後才繪圖。'));
+    const notice = node('div', 'mi-callout');
+    notice.append(
+      node('h4', '', '這個篩選暫無可繪圖的檔案'),
+      node('p', '', '散點圖需要可核對的起算時間及年齡組別。可切換物種或機構查看其他檔案。'),
+    );
     block.append(notice);
-    const story = waiting.fallback_story;
-    if (story?.id) {
-      block.append(node('p','mi-note','這個個案顯示兩次實際的官網觀察。等待天數未能計算。'),storyBody(story,openProfile));
-    }
     return block;
   }
-  const top = 19, bottom = 151, left = 35, right = 329;
-  const maxAge = Math.max(1,Math.ceil(Math.max(...points.map(item => item.age_years))));
-  const maxDays = Math.max(7,Math.ceil(Math.max(...points.map(item => item.wait_days)) / 7) * 7);
-  const x = age => left + (right-left) * age / maxAge;
-  const y = days => bottom - (bottom-top) * days / maxDays;
-  const longest = points.reduce((best,item) => item.wait_days > best.wait_days ? item : best);
-  const frame = node('div','mi-plot mi-scatter');
-  const graph = drawing('svg',{viewBox:'0 0 344 181',role:'group','aria-label':'按動物年齡及等待天數排列的散點圖'});
-  graph.append(drawing('path',{d:`M${left},${top}V${bottom}H${right}`,fill:'none',class:'mi-axis'}),
-    drawing('text',{x:left,y:11},'等待天數'),drawing('text',{x:right,y:173,'text-anchor':'end'},`${maxAge} 歲`),
-    drawing('text',{x:left,y:173},'0 歲'),drawing('text',{x:left-4,y:top+4,'text-anchor':'end'},format(maxDays)));
-  const marks = new Map();
-  const choices = select('mi-select mi-scatter-choices','選擇動物個案',
-    [['','選擇個案'],...points.map(item => [item.id,`${item.name || '動物'} · ${format(item.wait_days)} 天`])],'',id => setActive(id));
-  const story = node('div');
-  const label = drawing('text',{'text-anchor':'middle','aria-hidden':'true'});
-  function setActive(id) {
-    choices.value = id;
-    const item = points.find(point => point.id === id);
-    for (const [key,mark] of marks) mark.setAttribute('aria-pressed',String(key === id));
-    label.textContent = id ? '' : `已等待 ${format(longest.wait_days)} 天`;
-    story.replaceChildren(...(item ? [storyBody(item,() => openStorySheet(item,openProfile),'打開領養故事')] : []));
+
+  const outliers = points.filter(item => item.is_outlier);
+  const longest = points[0];
+  block.append(
+    takeawayBanner(
+      '重點結論',
+      `${format(points.length)} 則可比較檔案中，${longest.name || '居首個案'}距記錄起點 ${elapsedLabel(longest)}`,
+      `紅點標示按經過日數排序的前 ${format(outliers.length)} 則。`,
+    ),
+  );
+
+  const legend = node('div', 'mi-scatter-legend');
+  const normalKey = node('span');
+  normalKey.append(node('i', 'is-normal'), document.createTextNode('一般個案（點選看天數）'));
+  const outlierKey = node('span');
+  outlierKey.append(node('i', 'is-outlier'), document.createTextNode(`前 ${outliers.length} 則（點選看故事）`));
+  legend.append(normalKey, outlierKey);
+  block.append(legend);
+
+  const width = 344;
+  const height = 216;
+  const top = 19;
+  const bottom = 176;
+  const left = 44;
+  const right = 332;
+  const plotW = right - left;
+  const laneW = plotW / AGE_BAND_COLUMNS.length;
+
+  const rawMax = Math.max(...points.map(item => item.wait_days));
+  const step = rawMax > 1000 ? 400 : rawMax > 500 ? 200 : rawMax > 200 ? 100 : 50;
+  const maxDays = Math.max(step * 2, Math.ceil(rawMax / step) * step);
+  const yScale = days => bottom - ((bottom - top) * days) / maxDays;
+  const bandIndex = band => AGE_BAND_COLUMNS.findIndex(col => col.key === band);
+
+  // Compute non-overlapping jittered positions within each age band column
+  const positioned = [];
+  const laneBuckets = new Map([['young', []], ['adult', []], ['senior', []]]);
+  for (const item of points) laneBuckets.get(item.age_band)?.push(item);
+
+  for (const [band, group] of laneBuckets.entries()) {
+    const colIdx = bandIndex(band);
+    const centerX = left + laneW * (colIdx + 0.5);
+    const maxSpread = laneW * 0.34;
+    const sorted = [...group].sort((a, b) => b.wait_days - a.wait_days);
+    const placed = [];
+    for (let i = 0; i < sorted.length; i++) {
+      const item = sorted[i];
+      const py = yScale(item.wait_days);
+      let px = centerX + deterministicJitter(item.id) * maxSpread * 2;
+      if (item.is_outlier) {
+        // Keep red outlier dots nicely spaced when multiple outliers share a band
+        const outlierSlot = placed.filter(p => p.item.is_outlier).length;
+        const offsets = [0, -24, 24, -14, 14];
+        px = centerX + (offsets[outlierSlot % offsets.length] || 0);
+      } else {
+        for (let attempt = 0; attempt < 6; attempt++) {
+          const clash = placed.some(p => Math.hypot(p.x - px, p.y - py) < (p.item.is_outlier ? 13 : 9));
+          if (!clash) break;
+          const nudge = (attempt % 2 === 0 ? 1 : -1) * (attempt + 1) * 7;
+          px = Math.max(centerX - maxSpread, Math.min(centerX + maxSpread, px + nudge));
+        }
+      }
+      const entry = { item, x: px, y: py };
+      placed.push(entry);
+      positioned.push(entry);
+    }
   }
 
-  for (const item of [...points.filter(point => point !== longest),longest]) {
-    const maximum = item === longest;
-    const position = [x(item.age_years),y(item.wait_days)];
-    const mark = drawing('g',{class:'mi-point',transform:`translate(${position[0]} ${position[1]})`,role:'button',tabindex:'0',
-      'aria-label':`${item.name}，已等待 ${format(item.wait_days)} 天`,'aria-pressed':'false'});
-    mark.append(drawing('circle',{r:11,fill:'transparent'}),drawing('circle',{r:maximum ? 8 : 4.5,fill:maximum ? '#b64836' : '#a56b55',stroke:'#fff7f0'}));
-    if (maximum) {
-      const image = imageAsset(item.photo_url,item.name);
-      if (image) {
-        const clip = drawing('clipPath',{id:'mi-longest-point-image'});
-        clip.append(drawing('circle',{r:10}));
-        const crop = drawing('image',{href:image.src,x:-10,y:-10,width:20,height:20,preserveAspectRatio:'xMidYMid slice','clip-path':'url(#mi-longest-point-image)'});
-        crop.addEventListener('error',() => crop.remove(),{once:true});
-        mark.append(clip,crop);
-      }
-      label.setAttribute('x',String(Math.max(69,Math.min(278,position[0]))));
-      label.setAttribute('y',String(Math.min(bottom-3,position[1]+28)));
-    }
-    const action = () => { setActive(item.id); openStorySheet(item,openProfile); };
-    mark.addEventListener('click',action);
-    mark.addEventListener('keydown',event => {
-      if (!['Enter',' '].includes(event.key)) return;
-      event.preventDefault();
-      action();
+  const wrap = node('div', 'mi-scatter-wrap');
+  const tooltip = node('div', 'mi-scatter-tooltip');
+  tooltip.hidden = true;
+  tooltip.setAttribute('role', 'status');
+  tooltip.setAttribute('aria-live', 'polite');
+
+  const graph = drawing('svg', {
+    viewBox: `0 0 ${width} ${height}`,
+    role: 'group',
+    'aria-label': '依年齡組別及距記錄起點的日數繪製的散點圖',
+  });
+
+  // Subtle alternating lane band for middle column
+  graph.append(
+    drawing('rect', {
+      x: left + laneW,
+      y: top,
+      width: laneW,
+      height: bottom - top,
+      class: 'mi-scatter-lane',
+      rx: 6,
+    }),
+  );
+
+  // Horizontal gridlines & Y-axis ticks
+  const tickCount = Math.round(maxDays / step);
+  for (let i = 0; i <= tickCount; i++) {
+    const val = i * step;
+    const y = yScale(val);
+    graph.append(
+      drawing('line', {
+        x1: left,
+        x2: right,
+        y1: y,
+        y2: y,
+        class: i === 0 ? 'mi-scatter-axis' : 'mi-scatter-grid',
+      }),
+      drawing('text', { x: left - 6, y: y + 3.5, 'text-anchor': 'end' }, format(val)),
+    );
+  }
+  graph.append(
+    drawing('line', { x1: left, x2: left, y1: top, y2: bottom, class: 'mi-scatter-axis' }),
+    drawing('text', { x: left, y: 12 }, '距記錄起點（天）'),
+  );
+
+  // X-axis age band labels
+  for (const [idx, col] of AGE_BAND_COLUMNS.entries()) {
+    const cx = left + laneW * (idx + 0.5);
+    graph.append(
+      drawing('text', { x: cx, y: bottom + 17, 'text-anchor': 'middle', class: 'mi-scatter-xlabel' }, col.label),
+      drawing('text', { x: cx, y: bottom + 31, 'text-anchor': 'middle', class: 'mi-scatter-xsub' }, col.sub),
+    );
+  }
+
+  let pinned = null;
+  function showTip(entry) {
+    const { item, x, y } = entry;
+    tooltip.textContent = `${item.name} · ${elapsedLabel(item)}`;
+    const pctX = Math.max(18, Math.min(82, (x / width) * 100));
+    const pctY = (y / height) * 100;
+    tooltip.style.left = `${pctX}%`;
+    tooltip.style.top = `${pctY}%`;
+    tooltip.hidden = false;
+  }
+  function hideTip(force = false) {
+    if (force) pinned = null;
+    if (pinned) showTip(pinned);
+    else tooltip.hidden = true;
+  }
+
+  // Render normal points first, then red outlier points on top
+  const ordered = [
+    ...positioned.filter(p => !p.item.is_outlier),
+    ...positioned.filter(p => p.item.is_outlier),
+  ];
+
+  for (const entry of ordered) {
+    const { item, x, y } = entry;
+    const isOutlier = Boolean(item.is_outlier);
+    const label = isOutlier
+      ? `${item.name}，距記錄起點 ${elapsedLabel(item)}，點按查看牠的故事`
+      : `${item.name}，距記錄起點 ${elapsedLabel(item)}`;
+
+    const mark = drawing('g', {
+      class: `mi-scatter-dot${isOutlier ? ' is-outlier' : ''}`,
+      transform: `translate(${x.toFixed(1)} ${y.toFixed(1)})`,
+      role: 'button',
+      tabindex: '0',
+      'aria-label': label,
+      'data-outlier': String(isOutlier),
+      'data-wait-days': String(item.wait_days),
     });
-    marks.set(item.id,mark);
+
+    // Generous hit area
+    mark.append(drawing('circle', { r: isOutlier ? 15 : 11, fill: 'transparent' }));
+
+    if (isOutlier) {
+      mark.append(
+        drawing('circle', { r: 12.5, fill: 'rgba(201, 59, 43, 0.16)', class: 'mi-dot-halo' }),
+        drawing('circle', {
+          r: 7.6,
+          fill: '#c93b2b',
+          stroke: '#fffdf8',
+          'stroke-width': 2.1,
+          class: 'mi-dot-core',
+        }),
+      );
+    } else {
+      mark.append(
+        drawing('circle', {
+          r: 4.5,
+          fill: '#b67855',
+          'fill-opacity': 0.78,
+          stroke: '#fffdf8',
+          'stroke-width': 1.2,
+          class: 'mi-dot-core',
+        }),
+      );
+    }
+
+    mark.addEventListener('pointerenter', () => showTip(entry));
+    mark.addEventListener('focus', () => showTip(entry));
+    mark.addEventListener('pointerleave', () => hideTip(false));
+    mark.addEventListener('blur', () => hideTip(false));
+
+    const activate = event => {
+      event?.stopPropagation?.();
+      if (isOutlier) {
+        hideTip(true);
+        openStorySheet(item, openProfile, api);
+      } else {
+        pinned = pinned === entry ? null : entry;
+        hideTip();
+      }
+    };
+    mark.addEventListener('click', activate);
+    mark.addEventListener('keydown', event => {
+      if (!['Enter', ' '].includes(event.key)) return;
+      event.preventDefault();
+      activate(event);
+    });
+
     graph.append(mark);
   }
-  graph.append(label);
-  frame.append(graph);
-  setActive('');
-  block.append(frame,choices,story);
+
+  graph.addEventListener('click', () => hideTip(true));
+  wrap.append(graph, tooltip);
+  block.append(wrap);
+
+  const missingDate = waiting.missing_start ?? 0;
+  const missingAge = waiting.missing_age ?? 0;
+  block.append(node('p', 'mi-note', `本次可比較 ${format(points.length)} 則。另有 ${format(missingDate)} 則缺起算時間，${format(missingAge)} 則有起算時間但缺單一年齡組別。每點計至該檔案的快照日，僅記月份的個案按天數範圍中點排序。`));
   return block;
 }
 
@@ -1052,20 +1285,16 @@ function guidePanel(data, waiting, flow, openProfile) {
   const block = panel('資料如何解讀','了解各圖表的口徑限制與空缺原因');
   const list = node('div', 'mi-guide-list');
 
-  const hasValidWait = (waiting?.groups || []).some(group => supportedDuration(group.value) && group.label);
-  if (hasValidWait) {
-    block.append(waitingChart(waiting));
-    if (waiting.points?.length) block.append(scatterChart(waiting, openProfile));
-  } else {
-    const waitCard = node('article', 'mi-guide-card');
-    const missing = finite(waiting?.missing_start) ? format(waiting.missing_start) : format(data?.total);
-    const valid = finite(waiting?.valid_count) ? format(waiting.valid_count) : '0';
-    waitCard.append(
-      node('h4', '', '為何未將「等待天數」放在首屏圖表？'),
-      node('p', '', `目前 ${missing} 則待領養刊登均缺有效起算日（可核對 ${valid} 則）。多數機構網站只標示目前開放領養，未公開動物上架日期；兩次快照只能確認觀察當日狀態，因此不作推算，待機構補充日期後再繪圖。`),
-    );
-    list.append(waitCard);
-  }
+  const waitCard = node('article', 'mi-guide-card');
+  const plottedWaits = (waiting?.points || []).length;
+  const missingDate = waiting?.missing_start ?? 0;
+  const missingAge = waiting?.missing_age ?? 0;
+  waitCard.append(
+    node('h4', '', '「異常等待」如何比較不同動物？'),
+    node('p', '', `這個篩選共有 ${format(plottedWaits + missingDate + missingAge)} 則待領養檔案。${format(plottedWaits)} 則同時有可核對的起算時間與年齡組別，可列入散點圖。另有 ${format(missingDate)} 則缺起算時間，${format(missingAge)} 則有起算時間但無法歸入單一年齡組別。`),
+    node('p', '', '按每則檔案的快照日，計算自機構記錄的開放領養、入所或獲救起點經過的日數。只有月份的個案會顯示天數範圍，畫點和排名用範圍中點。紅點標示本次篩選中經過時間最長的個案。'),
+  );
+  list.append(waitCard);
 
   const flowCard = node('article', 'mi-guide-card');
   const included = finite(flow?.included_count) ? format(flow.included_count) : '—';
@@ -1207,20 +1436,49 @@ function trendChart(data, species, lastMonth, onMonth) {
   return block;
 }
 
-function listingSample(root, entries, openProfile, scope) {
-  const title = scope && scope !== '本次篩選' ? `${scope} · 待領養` : '待領養動物';
-  root.replaceChildren(node('h4', '', title));
+function listingSample(root, scope, openProfile, api, filters) {
+  const heading = node('h4', '', scope ? `${scope} · 待領養` : '待領養動物');
+  heading.tabIndex = -1;
   const list = node('div', 'mi-sample-list');
-  if (!entries.length) list.append(node('p', 'mi-note', '這批篩選暫無符合的檔案。'));
-  for (const item of entries.slice(0, 6)) {
-    const row = button('mi-profile', '', () => openProfile(item.id));
-    const copy = node('div');
-    copy.append(node('strong', '', item.name || '未命名'), node('small', '', [item.organisation, item.age_label].filter(Boolean).join(' · ')));
-    const arrow = node('span', '', '›'); arrow.setAttribute('aria-hidden', 'true');
-    row.append(copy, arrow);
-    list.append(row);
+  const note = node('p', 'mi-note');
+  note.setAttribute('role', 'status');
+  const more = button('mi-filter', '顯示更多檔案', load);
+  let page = 0;
+  root.replaceChildren(heading, list, note, more);
+  async function load() {
+    more.disabled = true;
+    more.hidden = !page;
+    note.textContent = '正在讀取檔案…';
+    try {
+      const result = await api.get('/api/listings', {...filters, page:page + 1, page_size:12});
+      if (!root.contains(list) || !root.isConnected) return;
+      let firstNewRow;
+      for (const item of result.items) {
+        const row = button('mi-profile', '', () => openProfile(item.id));
+        const copy = node('div');
+        const speciesTag = item.species === 'cat' ? '貓' : item.species === 'dog' ? '狗' : '';
+        copy.append(node('strong', '', item.name || '未命名'), node('small', '', [speciesTag, item.age_label].filter(Boolean).join(' · ')));
+        const arrow = node('span', '', '›');
+        arrow.setAttribute('aria-hidden', 'true');
+        row.append(copy, arrow);
+        list.append(row);
+        firstNewRow ??= row;
+      }
+      if (page && firstNewRow) firstNewRow.focus();
+      page++;
+      note.textContent = result.total ? `已顯示 ${format(list.childElementCount)} / ${format(result.total)} 則檔案` : '這個篩選暫無符合的檔案。';
+      more.textContent = '顯示更多檔案';
+      more.hidden = !result.items.length || list.childElementCount >= result.total;
+    } catch {
+      if (!root.contains(list) || !root.isConnected) return;
+      note.textContent = '暫時未能讀取這一頁檔案。';
+      more.textContent = '重新載入檔案';
+      more.hidden = false;
+    } finally {
+      more.disabled = false;
+    }
   }
-  root.append(list);
+  load();
 }
 
 export function mountInsights(root, {api, openProfile}) {
@@ -1243,7 +1501,7 @@ export function mountInsights(root, {api, openProfile}) {
   let current = 'map', species = '', organisation = '', centre = '', age = '', month = '', breed = '', request = 0, data, research, activeMapCleanup = null;
   const options = new Map();
   const speciesButtons = new Map();
-  const researchTabs = new Set(['flow','guide']);
+  const researchTabs = new Set(['outliers','flow','guide']);
   function showTab(id) {
     if (current === id) return;
     const previous = current;
@@ -1252,7 +1510,7 @@ export function mountInsights(root, {api, openProfile}) {
     if (organisation && (previous === 'trend' || id === 'trend')) refresh();
     else if (data) draw();
   }
-  for (const [id,label,short] of [['map','中心地圖','地圖'],['age','年齡分布','年齡'],['trend','領養趨勢','趨勢'],['flow','生命流向','流向'],['guide','資料解讀','解讀']]) {
+  for (const [id,label,short] of [['map','中心地圖','地圖'],['outliers','異常等待','等待'],['age','年齡分布','年齡'],['trend','領養趨勢','趨勢'],['flow','生命流向','流向'],['guide','資料解讀','解讀']]) {
     const tab = button('mi-tab',short,() => showTab(id));
     tab.setAttribute('aria-label', label);
     tab.title = label;
@@ -1321,6 +1579,7 @@ export function mountInsights(root, {api, openProfile}) {
       return;
     }
     const waiting = research.payload.waiting || {}, flow = research.payload.flow || {};
+    if (current === 'outliers') content.append(scatterChart(waiting, openProfile, api));
     if (current === 'flow') content.append(flowChart(flow,waiting,breed,value => { breed = value; },openProfile));
     if (current === 'guide') content.append(guidePanel(data,waiting,flow,openProfile));
   }
@@ -1356,7 +1615,6 @@ export function mountInsights(root, {api, openProfile}) {
         data.ages?.find(item => item.key === 'unknown')?.count));
     content.append(summary);
     const sample = node('section','mi-samples');
-    const allListings = data.listings || [];
     let map;
     const updateSample = () => {
       const selected = current === 'map' ? centre : age;
@@ -1367,18 +1625,24 @@ export function mountInsights(root, {api, openProfile}) {
       }
       const group = map?.shared.get(selected);
       const active = current === 'map' ? data.centres?.find(item => item.id === selected) : data.ages?.find(item => item.key === selected);
-      const ids = group ? group.entries.map(item => item.id) : [selected];
-      const entries = selected ? allListings.filter(item => ids.includes(current === 'map' ? item.centre_id : item.age_key)) : allListings;
-      if (current === 'map' && !entries.length) {
+      if (current === 'map' && (group || !active?.count)) {
         sample.hidden = true;
         sample.replaceChildren();
         return;
       }
       sample.hidden = false;
-      listingSample(sample,entries,openProfile,group?.shortName || active?.short_name || active?.name || active?.label || '本次篩選');
+      const filters = {species, organisation_id:organisation};
+      if (selected) filters[current === 'map' ? 'centre_id' : 'age_key'] = selected;
+      listingSample(sample, active?.short_name || active?.name || active?.label, openProfile, api, filters);
     };
     if (current === 'map') {
-      map = centreMap(data,centre,id => { centre = centre === id ? '' : id; map.update(centre); updateSample(); },api,species);
+      const viewListings = () => {
+        if (sample.hidden) return;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        sample.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+        sample.querySelector('h4')?.focus({preventScroll:true});
+      };
+      map = centreMap(data,centre,id => { centre = centre === id ? '' : id; map.update(centre); updateSample(); },api,species,viewListings);
       activeMapCleanup = map.destroy;
       content.append(map.block);
     } else {

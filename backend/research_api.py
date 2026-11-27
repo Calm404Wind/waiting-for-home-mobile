@@ -6,7 +6,8 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
-from .catalog import HERO_LISTING, OBS, STATUS_LABELS
+from .catalog import HERO_LISTING, STATUS_LABELS, age_value
+from .waiting import waiting_fields
 
 
 BREED_LABELS = {'mixed': '官網標註混種', 'pure': '官網明示純種', 'unknown': '官網未明示品種類別'}
@@ -35,23 +36,31 @@ def source_day(value):
 
 def breed_waits(catalogue, release, species, organisation_id):
     predicate = catalogue.query_filter(release, species=species, organisation_id=organisation_id)
-    fields = {**OBS, 'breed_raw': 1, 'eligible_at': 1}
-    rows = list(catalogue.db.observations.find(predicate, fields))
+    rows = list(catalogue.db.observations.find(predicate, {'source_evidence': 0}))
     candidates = []
+    missing_start = 0
     for obs in rows:
-        eligible = source_day(obs.get('eligible_at'))
-        snapshot = date.fromisoformat(obs['snapshot_date'])
-        if eligible and eligible <= snapshot:
-            candidates.append((obs, (snapshot - eligible).days))
+        evidence = waiting_fields(obs)
+        if evidence['wait_days'] is None:
+            missing_start += 1
+        else:
+            candidates.append((obs, evidence))
     groups = defaultdict(list)
     points = []
     if candidates:
         sample, _ = zip(*candidates)
         refs = catalogue.references(sample)
         media = catalogue.photo_map([row['_id'] for row in sample])
-        for obs, days in candidates:
+        history = defaultdict(list)
+        for entry in catalogue.db.observations.find({'listing_id': {'$in': [row['listing_id'] for row in sample]}, 'visibility': 'seen'},
+                    {'listing_id': 1, 'snapshot_date': 1, 'adoption_status': 1}).sort([('snapshot_date', 1), ('_id', 1)]):
+            history[entry['listing_id']].append(dict(date=entry['snapshot_date'], status_label=STATUS_LABELS[entry['adoption_status']]))
+        for obs, evidence in candidates:
+            band, label = age_value(obs, refs[0][obs['listing_id']])
+            if band not in {'young', 'adult', 'senior'}:
+                continue
             group = breed_group(obs.get('breed_raw'))
-            groups[group].append(days)
+            groups[group].append(evidence['wait_days'])
             estimate = obs.get('age_range_years') or {}
             birth = source_day(obs.get('birth_date_evidence'))
             age = None
@@ -59,17 +68,22 @@ def breed_waits(catalogue, release, species, organisation_id):
                 age = (date.fromisoformat(obs['snapshot_date']) - birth).days / 365.2425
             elif estimate.get('min') is not None and estimate.get('min') == estimate.get('max'):
                 age = estimate['min']
-            if age is not None and age >= 0:
-                card = catalogue.card(obs, refs, media[obs['_id']])
-                points.append(dict(id=card['id'], name=card['name'], photo_url=card['photo_url'], wait_days=days,
-                                   age_years=round(age, 2), breed_group=group))
+            card = catalogue.card(obs, refs, media[obs['_id']])
+            points.append({**card, **evidence, 'observations': history[card['id']], 'age_band': band, 'age_label': label,
+                           'age_years': round(age, 2) if age is not None and age >= 0 else None,
+                           'breed_group': group, 'is_outlier': False})
+    points.sort(key=lambda point: (-point['wait_days'], point['id']))
+    top_n = min(len(points), 2 if len(points) < 6 else 3 if len(points) < 16 else 5)
+    for point in points[:top_n]:
+        point['is_outlier'] = True
     story = None
     if species in {'', 'cat'} and organisation_id in {'', 'kirstens_zoo'}:
         detail = catalogue.detail(HERO_LISTING)
         if detail:
             story = dict(id=detail['id'], name=detail['name'], photo_url=detail['photo_url'],
                          observations=[dict(date=row['date'], status_label=row['status_label']) for row in detail['history']])
-    return dict(valid_count=len(candidates), missing_start=len(rows) - len(candidates),
+    return dict(reference_date=release['catalogue_as_of'], valid_count=len(points), missing_start=missing_start,
+                missing_age=len(candidates) - len(points), official_date_count=len(candidates), outlier_count=top_n,
                 groups=[dict(key=key, label=BREED_LABELS[key], value=median(values), count=len(values))
                         for key, values in groups.items()], points=points, fallback_story=story,
                 statistic_label='等待天數中位數')

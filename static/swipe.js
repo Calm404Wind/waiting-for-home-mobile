@@ -7,7 +7,6 @@ const ICONS = {
   search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
   share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>`,
   bookmark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h11v17L12 17l-5.5 3.5Z"/></svg>`,
-  profile: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M8.5 8.5h7M8.5 12.5h7M8.5 16.2h4.2"/></svg>`,
   undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M20 19v-4a6 6 0 0 0-6-6H4"/></svg>`,
   paw: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="15.3" rx="5.2" ry="4.3"/><ellipse cx="5.5" cy="10" rx="2.1" ry="2.7"/><ellipse cx="18.5" cy="10" rx="2.1" ry="2.7"/><ellipse cx="9.2" cy="5.7" rx="2" ry="2.6"/><ellipse cx="14.8" cy="5.7" rx="2" ry="2.6"/></svg>`,
   cat: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.2 3.4c-.5-.3-1.2.1-1.2.7v6.6C4 16 7.5 20 12 20s8-4 8-9.3V4.1c0-.6-.7-1-1.2-.7L15.1 6a9.6 9.6 0 0 0-6.2 0L5.2 3.4Z"/><circle cx="9.2" cy="12" r="1.25" fill="#fffdf9"/><circle cx="14.8" cy="12" r="1.25" fill="#fffdf9"/><path d="M12 14.8 10.7 13.5h2.6L12 14.8Z" fill="#fffdf9"/></svg>`,
@@ -33,29 +32,29 @@ const style = `
 
 .swipe-heading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: .75rem;
-  margin-bottom: .85rem;
+  gap: .65rem;
+  margin-bottom: .35rem;
 }
 .swipe-kicker {
   font-size: .74rem;
   font-weight: 800;
   letter-spacing: .08em;
   color: #c66322;
-  margin-bottom: 3px !important;
+  margin-bottom: 2px !important;
 }
 .swipe-heading h1 {
   font-family: var(--app-display, 'Noto Serif TC', Georgia, serif);
-  font-size: clamp(1.75rem, 6.2vw, 2.15rem);
+  font-size: clamp(1.42rem, 5.2vw, 1.78rem);
   font-weight: 900;
   letter-spacing: -.02em;
-  line-height: 1.15;
+  line-height: 1.12;
 }
 .swipe-heading-actions {
   display: flex;
   align-items: center;
-  gap: .45rem;
+  gap: .35rem;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -64,13 +63,13 @@ const style = `
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 44px;
-  padding: .25rem .5rem;
+  min-height: 38px;
+  padding: .2rem .45rem;
   background: transparent;
   color: #9c421f;
   border: 0;
   border-radius: 10px;
-  font-size: .84rem !important;
+  font-size: .82rem !important;
   font-weight: 700 !important;
   white-space: nowrap;
   box-shadow: none;
@@ -80,12 +79,12 @@ const style = `
 .swipe-pill-btn:hover { background: rgba(156, 66, 31, 0.08); }
 .swipe-pill-btn:active { opacity: .76; }
 
-.swipe-search { display: block; margin-bottom: .8rem; }
+.swipe-search { display: block; margin-bottom: .65rem; }
 .swipe-search input {
   width: 100%;
-  min-height: 46px;
+  min-height: 44px;
   border: 1px solid var(--deck-border);
-  padding: .55rem .95rem;
+  padding: .5rem .9rem;
   border-radius: 16px;
   background: #fffdf9;
   color: var(--deck-ink);
@@ -108,21 +107,21 @@ const style = `
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: .55rem .45rem;
-  margin-bottom: .95rem;
+  gap: .4rem;
+  margin-bottom: .58rem;
 }
 .swipe-filters {
   display: flex;
-  gap: .15rem;
+  gap: .12rem;
   background: transparent;
   padding: 0;
   border-radius: 0;
   border-bottom: 1px solid rgba(138, 102, 76, 0.18);
 }
 .swipe-chip {
-  min-height: 42px;
+  min-height: 38px;
   border-radius: 0;
-  padding: .3rem .68rem;
+  padding: .22rem .64rem;
   border: 0;
   border-bottom: 2.5px solid transparent;
   margin-bottom: -1px;
@@ -167,18 +166,18 @@ const style = `
 .swipe-stage {
   position: relative;
   isolation: isolate;
-  margin-bottom: 1.15rem;
-  padding-bottom: 10px;
+  margin-bottom: .45rem;
+  padding-bottom: 8px;
 }
 .swipe-stack {
   position: absolute;
   inset: 8px 12px 0;
-  border-radius: 28px;
+  border-radius: 26px;
   overflow: hidden;
   background: #edd7c0;
   border: 1px solid rgba(224, 126, 56, 0.18);
   z-index: -1;
-  transform: translateY(6px) scale(.965);
+  transform: translateY(5px) scale(.968);
   opacity: .72;
   box-shadow: 0 12px 26px -12px rgba(74, 43, 24, .18);
 }
@@ -192,11 +191,11 @@ const style = `
 
 .swipe-card {
   position: relative;
-  border-radius: 28px;
+  border-radius: 26px;
   overflow: hidden;
   background: #fffdf9;
   border: 1px solid rgba(224, 126, 56, 0.22);
-  box-shadow: 0 18px 40px -14px rgba(92, 58, 36, .24);
+  box-shadow: 0 18px 36px -14px rgba(92, 58, 36, .22);
   user-select: none;
   cursor: grab;
   touch-action: pan-y;
@@ -231,7 +230,7 @@ const style = `
 
 .pet-photo {
   position: relative;
-  height: clamp(178px, 22svh, 206px);
+  height: clamp(355px, 44svh, 405px);
   background: linear-gradient(145deg, #f8e2c8 0%, #eab98f 100%);
   overflow: hidden;
 }
@@ -240,8 +239,33 @@ const style = `
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: center 32%;
+  object-position: center 26%;
   pointer-events: none;
+}
+.pet-saved-tag {
+  position: absolute;
+  top: .85rem;
+  left: .85rem;
+  z-index: 3;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 .68rem;
+  border-radius: 10px;
+  background: rgba(255, 250, 241, .92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #a94f09;
+  font-size: .74rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(38, 20, 10, .14);
+}
+.pet-saved-tag svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
 }
 .swipe-cover {
   position: absolute;
@@ -325,58 +349,73 @@ const style = `
 }
 
 .pet-details {
-  padding: 14px 16px 15px;
+  padding: 10px 14px 11px;
   display: grid;
-  gap: 6px;
+  gap: 3px;
   background: #fffdf9;
   pointer-events: none;
 }
 .pet-title-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
-.pet-title-main { min-width: 0; }
+.pet-title-main {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
 .pet-title-main h2 {
   font-family: var(--app-display, 'Noto Serif TC', Georgia, serif);
-  font-size: 1.5rem;
+  font-size: 1.24rem;
   font-weight: 900;
-  line-height: 1.16;
+  line-height: 1.18;
   color: var(--deck-ink);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
 }
 .pet-meta-line {
-  margin-top: 5px !important;
-  font-size: .82rem;
+  margin-top: 0 !important;
+  font-size: .77rem;
   font-weight: 700;
   color: var(--deck-muted);
-  line-height: 1.4;
+  line-height: 1.2;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 .pet-species-icon {
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transform: translateY(1px);
 }
 .pet-species-icon.is-cat { color: #cf641f; }
 .pet-species-icon.is-dog { color: #cb4634; }
-.pet-species-icon svg { width: 17px; height: 17px; display: block; }
+.pet-species-icon svg { width: 15px; height: 15px; display: block; }
 
 .sex-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: .88rem;
   font-weight: 900;
   flex-shrink: 0;
 }
@@ -384,15 +423,18 @@ const style = `
 .sex-female { background: #fceaf0; color: #b84268; }
 
 .pet-org-line {
-  font-size: .8rem;
+  font-size: .75rem;
   font-weight: 600;
   color: #9c421f;
-  line-height: 1.4;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pet-excerpt {
-  font-size: .82rem;
-  line-height: 1.5;
+  font-size: .76rem;
+  line-height: 1.38;
   color: var(--deck-muted);
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -436,89 +478,31 @@ const style = `
   background: rgba(66, 48, 38, .9);
 }
 
-/* Figma Make 3 Circular Tactile Swipe Actions */
-.swipe-actions {
+.swipe-gesture-tip {
+  margin: .35rem 0 0 !important;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 1.35rem;
-  margin-top: .15rem;
-}
-.swipe-action {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 .2rem;
+  text-align: center;
+  font-size: .74rem;
+  font-weight: 600;
+  color: #8b7262;
+  letter-spacing: .01em;
+  line-height: 1.35;
+}
+.swipe-gesture-tip button {
+  min-height: 36px;
   border: 0;
+  border-radius: 8px;
+  padding: .25rem .3rem;
   background: transparent;
-  color: var(--deck-ink);
-  padding: 2px 6px;
-  min-width: 68px;
-  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease;
-}
-.swipe-action:active:not([aria-disabled='true']) { transform: scale(.93); }
-.swipe-action[aria-disabled='true'] { cursor: default; opacity: .55; }
-
-.swipe-circle {
-  width: 58px;
-  height: 58px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(224, 126, 56, 0.22);
-  background: #fffdf9;
-  box-shadow: 0 10px 22px -8px rgba(92, 58, 36, .18);
-  font-size: 1.55rem;
-  font-weight: 500;
-  line-height: 1;
-  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-}
-.swipe-circle svg { width: 24px; height: 24px; }
-.swipe-action:hover:not([aria-disabled='true']) .swipe-circle {
-  transform: translateY(-2px);
-}
-.swipe-action small {
-  font-size: .76rem;
-  font-weight: 700;
-  color: var(--deck-muted);
-  white-space: nowrap;
-}
-
-.swipe-skip .swipe-circle {
-  color: #6f5b4e;
-}
-.swipe-skip:hover:not([aria-disabled='true']) .swipe-circle {
-  background: #f7efe6;
-}
-
-.swipe-save .swipe-circle {
-  color: #c86a18;
-  background: #fffaf1;
-}
-.swipe-save.swipe-saved .swipe-circle {
-  background: #fde6be;
-  border-color: #e6a84c;
-  color: #a94f09;
-}
-.swipe-save.swipe-saved .swipe-circle svg {
-  fill: currentColor;
-}
-
-.swipe-cta .swipe-circle {
-  width: 60px;
-  height: 60px;
-  border: 0;
-  background: linear-gradient(135deg, #e27832 0%, #c8581d 100%);
-  color: #ffffff;
-  box-shadow: 0 12px 26px -6px rgba(200, 88, 29, .45);
-}
-.swipe-cta .swipe-circle svg {
-  fill: none;
-}
-.swipe-cta small {
-  color: #9c421f;
-  font-weight: 800;
+  color: #7d4427;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+  cursor: pointer;
 }
 
 .swipe-area-wrap {
@@ -580,29 +564,6 @@ const style = `
   flex-shrink: 0;
 }
 
-.swipe-extra {
-  display: flex;
-  justify-content: center;
-  margin-top: .35rem;
-}
-.swipe-apply-bar {
-  min-height: 44px;
-  padding: .35rem .9rem;
-  border-radius: 10px;
-  border: 0;
-  background: transparent;
-  color: #9c421f;
-  font-size: .88rem;
-  font-weight: 800;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: rgba(156, 66, 31, 0.38);
-  transition: background-color 160ms ease, opacity 140ms ease;
-}
-.swipe-apply-bar:hover:not([aria-disabled='true']) { background: rgba(156, 66, 31, 0.07); }
-.swipe-apply-bar:active:not([aria-disabled='true']) { opacity: .75; }
-.swipe-apply-bar[aria-disabled='true'] { cursor: default; opacity: .5; }
-
 .swipe-hint {
   margin-top: .65rem !important;
   text-align: center;
@@ -648,7 +609,6 @@ const style = `
 
 @media (max-width: 350px) {
   .swipe-chip { padding-inline: .6rem; }
-  .swipe-actions { gap: .9rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .swipe-card[data-exit], .swipe-card[data-returning='true'] { transition: none; }
@@ -679,16 +639,6 @@ function iconPill(svgHtml, text, className, onClick) {
   return node;
 }
 
-function circleAction(innerSvgOrText, label, className, onClick, isSvg = false) {
-  const node = button('', `swipe-action ${className}`.trim(), onClick);
-  const circle = el('span', 'swipe-circle');
-  circle.setAttribute('aria-hidden', 'true');
-  if (isSvg) circle.innerHTML = innerSvgOrText;
-  else circle.textContent = innerSvgOrText;
-  node.append(circle, el('small', '', label));
-  return node;
-}
-
 function safePhoto(path) {
   if (!path) return null;
   try {
@@ -699,7 +649,7 @@ function safePhoto(path) {
   }
 }
 
-export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGuide, onShare, onApply, initialRoute = {} }) {
+export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGuide, onShare, initialRoute = {} }) {
   const scope = el('section', 'swipe-screen');
   scope.setAttribute('aria-label', '滑動探索領養');
   const css = el('style', '', style);
@@ -733,8 +683,12 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
   undoToast.append(undoText, undoBtn);
   areaWrap.append(area, undoToast);
 
-  const actions = el('div', 'swipe-actions');
-  const extra = el('div', 'swipe-extra');
+  const gestureTip = el('div', 'swipe-gesture-tip');
+  gestureTip.setAttribute('role', 'group');
+  gestureTip.setAttribute('aria-label', '卡片操作');
+  const skipButton = button('← 左滑略過', '', () => move('left', area.querySelector('.swipe-card')));
+  const saveButton = button('右滑收藏 →', '', () => move('right', area.querySelector('.swipe-card')));
+  gestureTip.append(skipButton, '·', saveButton, '·', el('span', '', '點卡片看檔案'));
   const announced = el('div', 'swipe-visually-hidden');
 
   announced.setAttribute('aria-live', 'polite');
@@ -766,7 +720,7 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
   heading.append(titleBlock, headingActions);
 
   filterBar.append(filters, progress);
-  scope.append(heading, centreBar, searchLabel, filterBar, areaWrap, actions, extra, announced);
+  scope.append(heading, centreBar, searchLabel, filterBar, areaWrap, gestureTip, announced);
   root.replaceChildren(css, scope);
 
   let species = '', query = '', currentPage = 0, total = 0, nextIndex = 0;
@@ -792,11 +746,13 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
 
   function undoSkip() {
     if (animating || saving || !skippedStack.length) return;
+    const refocus = document.activeElement === undoBtn;
     const last = skippedStack.pop();
     hideUndoToast();
     nextIndex = last.index;
     announced.textContent = `已復原 ${last.item.name}`;
     render();
+    if (refocus) area.querySelector('.swipe-hit')?.focus({ preventScroll: true });
   }
 
   const chips = new Map();
@@ -947,15 +903,16 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
     if (r) r.style.opacity = '0';
   }
 
-  async function changeSaved(item, card, advance) {
+  function syncSavedBadge(item, card) {
+    const badge = card?.querySelector('.pet-saved-tag');
+    if (badge) badge.hidden = !isSaved(item.id);
+  }
+
+  async function changeSaved(item, card) {
     if (animating || saving) return;
     const active = { request: requestId, index: nextIndex };
-    const restoreSaveFocus = document.activeElement?.classList.contains('swipe-save');
     saving = active;
     returnCard(card);
-    for (const control of [...actions.children, ...extra.children]) {
-      control.setAttribute('aria-disabled', 'true');
-    }
     let result = null;
     try {
       result = await toggleSaved(item);
@@ -965,67 +922,22 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
       if (saving === active) saving = null;
     }
     if (disposed || active.request !== requestId || active.index !== nextIndex) return;
-    if (result === true && advance) depart('right', item, card);
+    if (result === true) depart('right', item, card);
     else {
       if (result === false) announced.textContent = `已取消收藏 ${item.name}`;
-      showActions(item, card);
-      if (restoreSaveFocus) actions.querySelector('.swipe-save')?.focus({ preventScroll: true });
+      syncSavedBadge(item, card);
     }
   }
 
   function move(direction, card) {
     const item = items[nextIndex];
-    if (animating || !item) return;
+    if (animating || !item || !card) return;
     if (saving) {
       returnCard(card);
       return;
     }
-    if (direction === 'right' && !isSaved(item.id)) changeSaved(item, card, true);
+    if (direction === 'right' && !isSaved(item.id)) changeSaved(item, card);
     else depart(direction, item, card);
-  }
-
-  function showActions(item, card) {
-    const saved = isSaved(item.id);
-    const skipBtn = circleAction('×', '略過', 'swipe-skip', () => move('left', card), false);
-    skipBtn.setAttribute('aria-label', `略過 ${item.name}`);
-
-    const saveBtn = circleAction(
-      ICONS.bookmark,
-      saved ? '已收藏' : '收藏',
-      saved ? 'swipe-save swipe-saved' : 'swipe-save',
-      () => changeSaved(item, card, !saved),
-      true,
-    );
-    saveBtn.setAttribute('aria-pressed', String(saved));
-    saveBtn.setAttribute('aria-label', `${saved ? '取消收藏' : '收藏'} ${item.name}`);
-
-    const detailBtn = circleAction(
-      ICONS.profile,
-      '查看檔案',
-      'swipe-cta',
-      () => {
-        if (!animating && !saving) openProfile(item.id);
-      },
-      true,
-    );
-    detailBtn.setAttribute('aria-label', `查看 ${item.name} 的完整檔案`);
-
-    actions.replaceChildren(skipBtn, saveBtn, detailBtn);
-
-    const controls = [];
-    if (onApply && item.status === 'listed') {
-      const applyBtn = button('申請領養 ›', 'swipe-apply-bar', () => {
-        if (animating || saving) return;
-        Promise.resolve()
-          .then(() => onApply(item))
-          .catch(() => {
-            announced.textContent = '暫時未能開啟，請再試一次。';
-          });
-      });
-      controls.push(applyBtn);
-    }
-    extra.replaceChildren(...controls);
-    extra.hidden = !controls.length;
   }
 
   function cardFor(item) {
@@ -1037,9 +949,22 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
       if (animating || saving || (event.detail && ignoredClick)) return;
       openProfile(item.id);
     });
-    hit.setAttribute('aria-label', `查看 ${item.name} 的完整檔案`);
+    hit.setAttribute('aria-label', `查看 ${item.name} 的完整檔案，左方向鍵略過，右方向鍵收藏`);
+    hit.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        move('left', card);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        move('right', card);
+      }
+    });
 
     const photoBox = el('div', 'pet-photo');
+    const savedTag = el('span', 'pet-saved-tag');
+    savedTag.innerHTML = `${ICONS.bookmark}<span>已收藏</span>`;
+    savedTag.hidden = !isSaved(item.id);
+    photoBox.append(savedTag);
     const cover = el('div', 'swipe-cover');
     const pawHolder = el('span');
     pawHolder.innerHTML = ICONS.paw;
@@ -1168,16 +1093,18 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
 
   function render() {
     const item = items[nextIndex];
+    const refocus = document.activeElement.classList.contains('swipe-hit') && area.contains(document.activeElement);
     progress.textContent = item
       ? `${number.format(nextIndex + 1)} / ${number.format(total)}`
       : '';
     progress.hidden = !progress.textContent;
-    actions.hidden = !item;
-    extra.hidden = !item || !extra.childElementCount;
+    gestureTip.hidden = !item;
     if (item) {
-      const { card, deck } = cardFor(item);
+      skipButton.setAttribute('aria-label', `略過 ${item.name}`);
+      saveButton.setAttribute('aria-label', `收藏並看下一則，${item.name}`);
+      const { deck } = cardFor(item);
       area.replaceChildren(deck);
-      showActions(item, card);
+      if (refocus) deck.querySelector('.swipe-hit').focus({ preventScroll: true });
       return;
     }
     const empty = el('div', 'swipe-empty');
@@ -1198,6 +1125,7 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
       }));
     }
     area.replaceChildren(empty);
+    if (refocus) empty.querySelector('button')?.focus({ preventScroll: true });
   }
 
   setRoute(initialRoute, true);
@@ -1205,7 +1133,7 @@ export function mountSwipe(root, { api, openProfile, isSaved, toggleSaved, onGui
     setRoute,
     refreshSaved() {
       const card = area.querySelector('.swipe-card');
-      if (!animating && !saving && card && items[nextIndex]) showActions(items[nextIndex], card);
+      if (!animating && !saving && card && items[nextIndex]) syncSavedBadge(items[nextIndex], card);
     },
     destroy() {
       disposed = true;

@@ -9,6 +9,10 @@ from urllib.parse import urlsplit
 
 from pymongo import MongoClient
 
+from .stories import clean, snapshot_story
+from .live_story import allowed as can_refresh_story, refresh_story
+from .waiting import waiting_fields
+
 
 STATUS_LABELS = {
     'listed': '官網列為待領養', 'foster_option': '可申請領養或暫養', 'trial': '申請中／試領養',
@@ -169,7 +173,7 @@ class Catalogue:
                     status=state, status_label=STATUS_LABELS[state], photo_url=primary[0]['url'] if primary else None,
                     centre_id=centre_id, centre_name=centres.get(centre_id), district=coord.get('district_name'),
                     sex_key=obs.get('sex') if obs.get('sex') in {'male', 'female'} else None,
-                    breed=obs.get('breed_raw'), description=(obs.get('source_values_raw') or {}).get('description_excerpt'),
+                    breed=obs.get('breed_raw'), description=clean((obs.get('source_values_raw') or {}).get('description_excerpt')) or None,
                     source_url=http_url(obs.get('source_url')), snapshot_date=obs['snapshot_date'])
 
     def items(self, species, organisation_id, status, q, page, page_size, centre_id='', age_key=''):
@@ -236,7 +240,21 @@ class Catalogue:
                       official_action_url=result['source_url'] if result['status'] in {'listed', 'foster_option'} else None,
                       photos=self.photos(photos[latest['_id']]), listing_url=http_url(latest.get('listing_url')),
                       history=captions, animal_names=members, adopted_date_label=adoption.get('raw'), identity_note=note)
+        result['size'] = clean((latest.get('source_values_raw') or {}).get('size_raw')) or None
+        result.update(waiting_fields(latest))
+        if latest.get('adoption_status') != 'listed':
+            # This snapshot describes a different status. Its age since intake
+            # does not measure how long the animal waited to be adopted.
+            result.update(wait_days=None, wait_days_min=None, wait_days_max=None)
         return result
+
+    def story(self, listing_id, refresh=False):
+        obs = self.db.observations.find_one({'listing_id': listing_id}, sort=[('snapshot_date', -1), ('_id', -1)])
+        if not obs:
+            return None
+        result = snapshot_story(obs)
+        result['can_refresh'] = can_refresh_story(result['source_url'], obs['organisation_id'])
+        return refresh_story(result, obs) if refresh and result['can_refresh'] else result
 
     @lru_cache(maxsize=4)
     def geography(self, filename):

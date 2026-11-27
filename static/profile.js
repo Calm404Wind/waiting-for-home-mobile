@@ -1,3 +1,5 @@
+import { elapsedSummary } from './wait-labels.js';
+
 const STYLES = `
 body:has(> .animal-sheet[open]) { overflow:hidden; }
 .animal-sheet,.animal-sheet * { box-sizing:border-box; }
@@ -39,7 +41,14 @@ body:has(> .animal-sheet[open]) { overflow:hidden; }
 .as-card h2,.as-card h3 { margin:0; line-height:1.2; font-family:var(--app-display,'Noto Serif TC',Georgia,serif); }
 .as-card h3 { font-size:1.12rem; font-weight:900; }
 .as-name { margin-top:6px!important; font-size:clamp(1.9rem,8.2vw,2.5rem); font-weight:900; letter-spacing:-.02em; font-family:var(--app-display,'Noto Serif TC',Georgia,serif); }
-.as-subtitle,.as-note,.as-description { color:var(--as-muted); margin:8px 0 0; font-size:.92rem; line-height:1.65; }
+.as-subtitle,.as-note,.as-description { color:var(--as-muted); margin:8px 0 0; font-size:.92rem; line-height:1.68; }
+.as-description { color:var(--as-ink); font-size:.94rem; line-height:1.74; }
+.as-story-body { display:grid; gap:10px; margin-top:10px; }
+.as-story-body p { margin:0; }
+.as-story-status { margin:10px 0 0; font-size:.82rem; color:var(--as-muted); }
+.as-traits { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 2px; padding:0; list-style:none; }
+.as-traits li { font-size:.78rem; font-weight:700; color:#7f4b2b; background:#fff4e6; border:1px solid rgba(214,106,36,.22); border-radius:8px; padding:3px 9px; }
+.as-wait-note { margin:8px 0 0; font-size:.84rem; font-weight:700; color:#b33a27; }
 .as-state { display:inline-block; padding:0; background:transparent; color:#a04423; font-size:.8rem; line-height:1.35; font-weight:800; letter-spacing:.02em; }
 .as-state[data-status=adopted] { background:transparent; color:#2b5c34; }
 .as-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:14px; margin:16px 0 0; }
@@ -49,6 +58,8 @@ body:has(> .animal-sheet[open]) { overflow:hidden; }
 .as-links { display:flex; flex-wrap:wrap; gap:6px 16px; margin:8px 0 0; font-size:.85rem; }
 .as-links a { display:inline-block; padding:7px 0; }
 .as-prepare { font:inherit; font-weight:700; color:var(--as-link); border:0; background:transparent; padding:7px 0; text-decoration:underline; text-underline-offset:.24em; cursor:pointer; }
+.as-source-foot { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 14px; padding:6px 4px 2px; font-size:.8rem; color:var(--as-muted); }
+.as-source-foot .as-links { margin:0; font-size:.8rem; }
 .as-history-list { list-style:none; margin:16px 0 0; padding:0 0 0 15px; border-left:2px solid #ecc6a4; }
 .as-observation { position:relative; padding:0 0 18px 4px; }
 .as-observation:last-child { padding-bottom:0; }
@@ -264,7 +275,20 @@ function timeline(item) {
   return section;
 }
 
-function view(body, footer, item, onApply) {
+function appendFactRow(facts, seenLabels, label, value) {
+  if (typeof label !== 'string' || typeof value !== 'string') return;
+  const cleanLabel = label.trim();
+  const cleanValue = value.trim();
+  if (!cleanLabel || !cleanValue) return;
+  const normKey = cleanLabel === '所在中心' ? '中心' : cleanLabel;
+  if (seenLabels.has(normKey)) return;
+  seenLabels.add(normKey);
+  const fact = element('div', 'as-fact');
+  fact.append(element('dt', '', cleanLabel), element('dd', '', cleanValue));
+  facts.append(fact);
+}
+
+function view(body, footer, item, onApply, fetchCurrentStory) {
   const name = item.name || '名稱未公佈';
   const summary = element('section', 'as-card');
   const heading = element('h2', 'as-name', name);
@@ -272,48 +296,138 @@ function view(body, footer, item, onApply) {
   summary.append(state(item.status_label, item.status), heading);
   const description = [SPECIES[item.species], item.organisation].filter(Boolean).join(' · ');
   if (description) summary.append(element('p', 'as-subtitle', description));
+  const elapsed = elapsedSummary(item);
+  if (elapsed) summary.append(element('p', 'as-wait-note', elapsed));
 
   const facts = element('dl', 'as-facts');
+  const seenLabels = new Set();
   const members = item.animal_names?.length > 1 ? item.animal_names.join('、') : null;
-  for (const [label, value] of [['年齡', item.age_label], ['性別', item.sex], ['品種', item.breed], ['中心', item.centre], ['檔案成員', members]]) {
-    if (typeof value !== 'string' || !value.trim()) continue;
-    const fact = element('div', 'as-fact');
-    fact.append(element('dt', '', label), element('dd', '', value));
-    facts.append(fact);
+  for (const [label, value] of [
+    ['年齡', item.age_label],
+    ['性別', item.sex],
+    ['品種', item.breed],
+    ['體型', item.size],
+    ['中心', item.centre],
+    ['檔案成員', members],
+  ]) {
+    appendFactRow(facts, seenLabels, label, value);
   }
-  if (facts.childElementCount) summary.append(facts);
-  body.replaceChildren(gallery(item, name), summary);
+  summary.append(facts);
+  facts.hidden = facts.childElementCount === 0;
+
+  const about = element('section', 'as-card');
+  about.append(element('h3', '', '機構介紹'));
+  const traitsHost = element('div');
+  const storyBody = element('div', 'as-story-body');
   if (item.description) {
-    const about = element('section', 'as-card');
-    about.append(element('h3', '', `認識${name}`), element('p', 'as-description', item.description));
-    if (/(?:…|\.{3})$/.test(item.description.trim())) {
-      const more = element('div', 'as-links');
-      appendSource(more, '到機構官網閱讀完整介紹 ↗', item.source_url);
-      if (more.childElementCount) about.append(more);
-    }
-    body.append(about);
+    storyBody.append(element('p', 'as-description', item.description));
   }
+  const storyStatus = element(
+    'p',
+    'as-story-status',
+    item.source_url ? '正在讀取機構介紹…' : '',
+  );
+  storyStatus.setAttribute('role', 'status');
+  if (!storyStatus.textContent) storyStatus.hidden = true;
+  const refreshStory = button('as-prepare', '讀取最新官網介紹', async () => {
+    refreshStory.disabled = true;
+    storyStatus.hidden = false;
+    storyStatus.textContent = '正在查閱機構目前公開的介紹…';
+    try {
+      const latest = await fetchCurrentStory();
+      if (about.isConnected) storyView.hydrateStory(latest);
+    } catch (cause) {
+      if (!about.isConnected) return;
+      if (cause?.code === 'test-access') storyView.markStoryFallback(cause);
+      else storyStatus.textContent = '暫時未能讀取官網更新。';
+    } finally {
+      refreshStory.disabled = false;
+    }
+  }, '讀取最新官網介紹');
+  refreshStory.hidden = true;
+  about.append(traitsHost, storyBody, storyStatus, refreshStory);
+
+  const originalStory = element('div', 'as-links');
+  appendSource(originalStory, '閱讀機構原文 ↗', item.source_url);
+  if (originalStory.childElementCount) about.append(originalStory);
+  const sourceFoot = element('div', 'as-source-foot');
+  const urls = element('div', 'as-links');
+  appendSource(urls, '機構原始檔案 ↗', item.source_url);
+  if (item.centre_evidence_url !== item.source_url) appendSource(urls, '位置來源 ↗', item.centre_evidence_url);
+  if (item.contact_url !== item.source_url) appendSource(urls, '聯絡機構 ↗', item.contact_url);
   const listed = ['listed', 'foster_option'].includes(item.status);
   const official = sourceUrl(item.official_action_url) || sourceUrl(item.source_url);
   const contact = sourceUrl(item.contact_url);
-  const sources = element('section', 'as-card');
-  const urls = element('div', 'as-links');
-  appendSource(urls, '原始檔案 ↗', item.source_url);
-  if (item.centre_evidence_url !== item.source_url) appendSource(urls, '位置來源 ↗', item.centre_evidence_url);
-  if (!listed && contact && contact !== item.source_url) appendSource(urls, '聯絡機構 ↗', contact);
   if (listed && onApply && official) {
     const apply = button('as-prepare', '準備申請領養', () => onApply(item, apply), '準備申請領養');
     urls.append(apply);
   }
+  body.replaceChildren(gallery(item, name), summary, about, timeline(item));
   if (urls.childElementCount) {
-    sources.append(element('h3', '', '機構與來源'), urls);
-    body.append(sources);
+    sourceFoot.append(element('span', '', '資料出處'), urls);
+    body.append(sourceFoot);
   }
-  body.append(timeline(item));
   if (listed) {
     const cta = link(contact ? '向機構查詢 ↗' : '查看官網領養檔案 ↗', contact || official, 'as-cta');
     if (cta) { footer.replaceChildren(cta); footer.hidden = false; }
   }
+
+  const storyView = {
+    hydrateStory(story) {
+      refreshStory.hidden = !story?.can_refresh;
+      for (const extra of story?.facts || []) {
+        appendFactRow(facts, seenLabels, extra.label, extra.value);
+      }
+      facts.hidden = facts.childElementCount === 0;
+
+      traitsHost.replaceChildren();
+      if (story?.traits?.length) {
+        const list = element('ul', 'as-traits');
+        list.setAttribute('aria-label', '性格與特徵');
+        for (const trait of story.traits) {
+          list.append(element('li', '', trait));
+        }
+        traitsHost.append(list);
+      }
+
+      if (sourceUrl(story?.source_url) && story.source_url !== item.source_url) {
+        originalStory.replaceChildren();
+        appendSource(originalStory, '閱讀機構原文 ↗', story.source_url);
+        if (!originalStory.isConnected) about.append(originalStory);
+      }
+      const paragraphs = Array.isArray(story?.paragraphs)
+        ? story.paragraphs
+        : (item.description ? [item.description] : []);
+      storyBody.replaceChildren();
+      if (paragraphs.length) {
+        for (const text of paragraphs) {
+          storyBody.append(element('p', 'as-description', text));
+        }
+        const archiveDate = story?.snapshot_date ? `（${story.snapshot_date} 快照）` : '';
+        storyStatus.textContent = story?.source === 'live'
+          ? '文字來自機構目前公開的網頁。'
+          : `文字來自已收錄的機構資料${archiveDate}。`;
+        storyStatus.hidden = false;
+      } else {
+        storyStatus.hidden = false;
+        storyStatus.textContent = '已收錄的資料未附文字介紹。';
+      }
+      if (story?.live_unavailable) storyStatus.textContent += ' 暫時未能取得官網更新，現顯示本期存檔。';
+    },
+    markStoryFallback(cause) {
+      storyStatus.hidden = false;
+      if (cause?.code === 'test-access') {
+        const signIn = element('a', '', cause.action);
+        signIn.href = cause.href;
+        storyStatus.replaceChildren(document.createTextNode(cause.message + ' '), signIn);
+      } else {
+        storyStatus.textContent = storyBody.childElementCount
+          ? '目前顯示已收錄的機構簡介。'
+          : '暫無可顯示的機構介紹。';
+      }
+    },
+  };
+  return storyView;
 }
 
 export function closeAnimal() {
@@ -417,20 +531,54 @@ function showAnimal(listingId, { api, isSaved, toggleSaved, isLiked, toggleLike,
     const pending = element('p', 'as-card as-loading', '正在載入動物檔案…');
     pending.setAttribute('role', 'status');
     body.replaceChildren(pending);
+    let fetched = false;
     try {
       item = await api.get(`/api/listings/${encodeURIComponent(listingId)}`);
       if (!dialog.open) return;
-      view(body, footer, item, onApply && ((_item, control) => runAction(control, onApply, '暫時無法開啟申請流程。')));
+      fetched = true;
+      if (item?.id !== listingId) throw new Error('Unexpected profile response');
+      const viewHandle = view(
+        body,
+        footer,
+        item,
+        onApply && ((_item, control) => runAction(control, onApply, '暫時無法開啟申請流程。')),
+        () => api.get(`/api/listings/${encodeURIComponent(listingId)}/story`, {refresh:true}),
+      );
       dialog.removeAttribute('aria-label');
       dialog.setAttribute('aria-labelledby', 'mobile-animal-name');
       share.hidden = !onShare;
       like.hidden = !toggleLike;
       save.hidden = !toggleSaved;
       updateActions();
-    } catch {
+
+      api.get(`/api/listings/${encodeURIComponent(listingId)}/story`)
+        .then(story => {
+          if (!dialog.open || dialog.dataset.listingId !== listingId) return;
+          viewHandle.hydrateStory(story);
+        })
+        .catch(cause => {
+          if (!dialog.open || dialog.dataset.listingId !== listingId) return;
+          viewHandle.markStoryFallback(cause);
+        });
+    } catch (cause) {
       if (!dialog.open) return;
       const error = element('div', 'as-card as-loading');
-      error.append(element('p', '', '暫時讀不到這則動物檔案。'), button('as-retry', '重新載入', load, '重新載入'));
+      error.setAttribute('role', 'alert');
+      footer.hidden = true;
+      for (const control of [share, like, save]) control.hidden = true;
+      if (cause.code === 'test-access') {
+        const verify = element('a', 'as-retry', cause.action + '並返回檔案');
+        verify.href = cause.href;
+        error.append(element('p', '', cause.message), verify);
+      } else if (cause.status === 404) {
+        error.append(element('p', '', '目前的領養名錄找不到這則動物檔案。'),
+          button('as-retry', '返回', closeAnimal, '返回'));
+      } else {
+        let message = '未能連接動物檔案，請檢查網絡後重試。';
+        if (fetched || cause.status === 200) message = '已收到檔案回應，但未能顯示內容。請重新載入。';
+        else if (cause.status) message = '動物檔案服務暫時無法提供資料，請稍後重試。';
+        error.append(element('p', '', message), button('as-retry', '重新載入', load, '重新載入'));
+      }
       body.replaceChildren(error);
     } finally { body.setAttribute('aria-busy', 'false'); }
   }

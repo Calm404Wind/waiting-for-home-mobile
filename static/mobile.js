@@ -1,9 +1,9 @@
-import { mountSwipe } from './swipe.js?v=21';
-import { mountInsights } from './insights.js?v=22';
-import { openAnimal } from './profile.js?v=21';
+import { mountSwipe } from './swipe.js?v=25';
+import { mountInsights } from './insights.js?v=25';
+import { openAnimal } from './profile.js?v=25';
 import { createAccount } from './account.js?v=21';
-import { openShare, startApplication } from './actions.js?v=21';
-import { mountArticles, openGuide } from './learn.js?v=21';
+import { openShare, startApplication } from './actions.js?v=24';
+import { mountArticles, openGuide } from './learn.js?v=25';
 
 const byId = id => document.getElementById(id);
 const views = ['home', 'discover', 'insights', 'saved', 'privacy-policy'];
@@ -13,21 +13,32 @@ async function request(method, path, { params = {}, body } = {}) {
   for (const [key, value] of Object.entries(params)) {
     if (value !== '' && value !== null && value !== undefined) url.searchParams.set(key, value);
   }
-  const options = { method, cache: 'no-store' };
+  const options = { method, cache: 'no-store', credentials: 'same-origin', redirect: 'manual',
+    headers: { Accept: 'application/json' } };
   if (body !== undefined) {
-    Object.assign(options, {
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(body);
   }
   const response = await fetch(url, options);
+  if (response.headers.get('X-Group-Access') === 'active') byId('group-logout').hidden = false;
+  const redirected = response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400);
+  const gateDeniedWrite = method !== 'GET' && response.status === 401 &&
+    (response.headers.get('content-type') || '').toLowerCase().startsWith('text/plain');
+  if ((redirected || gateDeniedWrite) && location.hostname.endsWith('.trycloudflare.com')) {
+    throw testAccessRequired(path, false);
+  }
   let payload;
   try {
     payload = await response.json();
   } catch {
-    throw new Error('資料服務目前無法回應。');
+    const error = new Error('資料服務目前無法回應。');
+    error.status = response.status;
+    throw error;
   }
   if (!response.ok) {
+    if (response.status === 401 && payload?.code === 'group_login_required') {
+      throw testAccessRequired(path, true);
+    }
     const error = new Error(typeof payload.detail === 'string' ? payload.detail : '未能完成此項操作。');
     error.status = response.status;
     throw error;
@@ -64,6 +75,36 @@ const favorites = () => account.getUser()?.favorites || [];
 const isSaved = id => favorites().some(item => item.id === id);
 const isLiked = id => account.getUser()?.likes?.includes(id) ?? false;
 const pending = new Set();
+
+function testAccessRequired(path, useKey) {
+  const detailId = path.startsWith('/api/listings/') ? path.slice('/api/listings/'.length) : '';
+  const profileId = detailId || document.querySelector('.animal-sheet[open]')?.dataset.listingId;
+  const returnUrl = new URL('/', location.origin);
+  if (validId(profileId)) returnUrl.searchParams.set('animal', profileId);
+  else returnUrl.searchParams.set('resume', location.hash.slice(1) || 'home');
+  const error = new Error(useKey ? '請用小組帳戶和密鑰登入。' : '小組測試入口要求驗證電郵。');
+  error.code = 'test-access';
+  error.action = useKey ? '登入' : '驗證電郵';
+  error.href = useKey
+    ? '/group/login?' + new URLSearchParams({ next: returnUrl.pathname + returnUrl.search })
+    : returnUrl.href;
+  if (!detailId) showVerificationNotice(error);
+  return error;
+}
+
+function showVerificationNotice(error) {
+  const modal = Array.from(document.querySelectorAll('dialog[open]')).at(-1);
+  const content = modal?.querySelector('.as-scroll, .wfa-body, .pet-action-body') || modal || byId('app-content');
+  if (!content) return;
+  byId('test-access-notice')?.remove();
+  const notice = newText('aside', '', 'source-note');
+  notice.id = 'test-access-notice';
+  notice.setAttribute('role', 'alert');
+  const verify = newText('a', error.action + '並返回', 'app-action app-action-soft');
+  verify.href = error.href;
+  notice.append(newText('p', error.message), verify);
+  content.prepend(notice);
+}
 
 function updateGreeting() {
   const dateNode = byId('home-date');
@@ -313,7 +354,20 @@ function goTo(view) {
 }
 
 function navigate(event) {
-  const target = location.hash.slice(1);
+  const pageUrl = new URL(location.href);
+  let target = pageUrl.hash.slice(1);
+  if (!screen) {
+    const pendingAnimal = pageUrl.searchParams.get('animal');
+    const resume = pageUrl.searchParams.get('resume');
+    if (validId(pendingAnimal)) target = 'animal=' + pendingAnimal;
+    else if (resume && views.includes(resume.split('?', 1)[0])) target = resume;
+    if (pageUrl.searchParams.has('animal') || pageUrl.searchParams.has('resume')) {
+      pageUrl.searchParams.delete('animal');
+      pageUrl.searchParams.delete('resume');
+      pageUrl.hash = target;
+      history.replaceState(history.state, '', pageUrl);
+    }
+  }
   let animal = '';
   if (target.startsWith('animal=')) {
     try {
